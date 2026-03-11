@@ -10,11 +10,9 @@ type Slot = {
 
 export default function Calendar() {
 
-  const appointments = useAppointments();
+  const { appointments, createAppointment } = useAppointments();
 
   const safeAppointments = Array.isArray(appointments) ? appointments : [];
-  
-  console.log("appointments:", safeAppointments);
 
   const slots: Slot[] = [
     { time: "09:00", booked: false },
@@ -55,7 +53,13 @@ export default function Calendar() {
         {slotsWithAppointments.map((slot) => (
           <div
             key={slot.time}
-            onClick={() => console.log("CLICK SLOT", slot.time)}
+            onClick={() => {
+              console.log("CLICK SLOT", slot.time);
+
+              if (!slot.booked) {
+                createAppointment(slot.time);
+              }
+            }}
             style={{
               padding: 16,
               border: "1px solid #ccc",

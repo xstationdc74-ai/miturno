@@ -7,26 +7,43 @@ export function useAppointments() {
 
   const [appointments, setAppointments] = useState<any[]>([]);
 
-  useEffect(() => {
+  async function loadAppointments() {
 
-    async function loadAppointments() {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select("*");
 
-      const { data, error } = await supabase
-        .from("appointments")
-        .select("*");
-
-      if (error) {
-        console.log("SUPABASE ERROR:", error);
-      }
-
-      console.log("SUPABASE DATA:", data);
-
-      setAppointments(data || []);
+    if (error) {
+      console.log("SUPABASE ERROR:", error);
     }
 
-    loadAppointments();
+    setAppointments(data || []);
+  }
 
+  async function createAppointment(time: string) {
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const start_time = `${today} ${time}:00`;
+
+    const { error } = await supabase
+      .from("appointments")
+      .insert({
+        client_name: "Nuevo Cliente",
+        start_time,
+        status: "booked"
+      });
+
+    if (error) {
+      console.log("INSERT ERROR:", error);
+    }
+
+    await loadAppointments();
+  }
+
+  useEffect(() => {
+    loadAppointments();
   }, []);
 
-  return appointments;
+  return { appointments, createAppointment };
 }
