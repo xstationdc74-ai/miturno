@@ -1,81 +1,76 @@
-"use client";
+// components/Calendar.tsx
 
-import { useAppointments } from "@/hooks/useAppointments";
+"use client"
 
-type Slot = {
-  time: string;
-  booked: boolean;
-  client?: string;
-};
+import { useState } from "react"
+import { useAppointments } from "@/hooks/useAppointments"
+import AppointmentModal from "./AppointmentModal"
+
+type Appointment = {
+  id?: string
+  start_time: string
+  client_name: string
+}
+
+function getLocalTime(dateString: string) {
+  const date = new Date(dateString)
+
+  const hours = date.getHours().toString().padStart(2, "0")
+  const minutes = date.getMinutes().toString().padStart(2, "0")
+
+  return `${hours}:${minutes}`
+}
 
 export default function Calendar() {
+  const { appointments, createAppointment } = useAppointments()
 
-  const { appointments, createAppointment } = useAppointments();
+  const [selectedTime, setSelectedTime] = useState<string | null>(null)
 
-  const safeAppointments = Array.isArray(appointments) ? appointments : [];
+  const hours = [
+    "09:00","09:30","10:00","10:30","11:00","11:30",
+    "12:00","12:30","13:00","13:30","14:00","14:30",
+    "15:00","15:30","16:00","16:30","17:00","17:30"
+  ]
 
-  const slots: Slot[] = [
-    { time: "09:00", booked: false },
-    { time: "09:30", booked: false },
-    { time: "10:00", booked: false },
-    { time: "10:30", booked: false },
-    { time: "11:00", booked: false },
-  ];
-
-  const slotsWithAppointments = slots.map((slot) => {
-
-    const appointment = safeAppointments.find((a: any) => {
-      const time = new Date(a.start_time).toLocaleTimeString("es-AR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-      });
-
-      return time === slot.time;
-    });
-
-    if (appointment) {
-      return {
-        ...slot,
-        booked: true,
-        client: appointment.client_name,
-      };
-    }
-
-    return slot;
-  });
+  const handleConfirm = async (name: string) => {
+    if (!selectedTime) return
+    await createAppointment(selectedTime, name)
+    setSelectedTime(null)
+  }
 
   return (
-    <div style={{ padding: 40 }}>
-      <h1>Agenda</h1>
+    <div className="max-w-sm mx-auto divide-y border rounded-lg overflow-hidden bg-white">
+      {hours.map((time) => {
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-        {slotsWithAppointments.map((slot) => (
+        const appointment = appointments.find((a: Appointment) =>
+          getLocalTime(a.start_time) === time
+        )
+
+        return (
           <div
-            key={slot.time}
-            onClick={() => {
-              console.log("CLICK SLOT", slot.time);
-
-              if (!slot.booked) {
-                createAppointment(slot.time);
-              }
-            }}
-            style={{
-              padding: 16,
-              border: "1px solid #ccc",
-              cursor: "pointer",
-              width: 250,
-              background: slot.booked ? "#fee2e2" : "#e0f2fe"
-            }}
+            key={time}
+            onClick={() => !appointment && setSelectedTime(time)}
+            className={`flex items-center justify-between px-4 py-3 text-sm ${
+              appointment
+                ? "bg-red-50 text-red-700 cursor-not-allowed"
+                : "hover:bg-gray-50 cursor-pointer"
+            }`}
           >
-            <strong>{slot.time}</strong>
+            <span className="font-medium">{time}</span>
 
-            <div>
-              {slot.booked ? slot.client : "Libre"}
-            </div>
+            {appointment && (
+              <span className="text-gray-700">{appointment.client_name}</span>
+            )}
           </div>
-        ))}
-      </div>
+        )
+      })}
+
+      <AppointmentModal
+        time={selectedTime || ""}
+        open={!!selectedTime}
+        onClose={() => setSelectedTime(null)}
+        onConfirm={handleConfirm}
+      />
     </div>
-  );
+  )
 }

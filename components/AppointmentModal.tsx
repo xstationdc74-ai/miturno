@@ -1,94 +1,56 @@
+// components/AppointmentModal.tsx
+
+"use client"
+
+import { useState } from "react"
+
 type Props = {
-  modalOpen: boolean;
-  selectedSlot: string;
-  clientName: string;
-  setClientName: (name: string) => void;
-  saveAppointment: () => void;
-  closeModal: () => void;
-};
+  time: string
+  open: boolean
+  onClose: () => void
+  onConfirm: (name: string) => void
+}
 
-export default function AppointmentModal({
-  modalOpen,
-  selectedSlot,
-  clientName,
-  setClientName,
-  saveAppointment,
-  closeModal
-}: Props) {
+export default function AppointmentModal({ time, open, onClose, onConfirm }: Props) {
+  const [name, setName] = useState("")
 
-  if (!modalOpen) return null;
+  if (!open) return null
+
+  const handleConfirm = () => {
+    if (!name.trim()) return
+    onConfirm(name.trim())
+    setName("")
+    onClose()
+  }
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: "rgba(0,0,0,0.5)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center"
-      }}
-    >
-      <div
-        style={{
-          background: "white",
-          padding: 30,
-          borderRadius: 10,
-          width: 320,
-          color: "#111"
-        }}
-      >
-        <h3>Nuevo turno</h3>
-
-        <p><strong>{selectedSlot}</strong></p>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40">
+      <div className="bg-white rounded-lg p-6 w-80 space-y-4">
+        <h2 className="text-lg font-semibold">Nuevo turno {time}</h2>
 
         <input
-          autoFocus
+          className="w-full border rounded px-3 py-2"
           placeholder="Nombre del cliente"
-          value={clientName}
-          onChange={(e) => setClientName(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              saveAppointment();
-            }
-          }}
-          style={{
-            width: "100%",
-            padding: 8,
-            marginTop: 10,
-            marginBottom: 20,
-            border: "1px solid #ccc"
-          }}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
 
-        <button
-          onClick={saveAppointment}
-          style={{
-            background: "#3b82f6",
-            color: "white",
-            border: "none",
-            padding: "8px 12px",
-            borderRadius: 6,
-            cursor: "pointer"
-          }}
-        >
-          Guardar
-        </button>
+        <div className="flex justify-end gap-2">
+          <button
+            className="px-3 py-2 text-sm border rounded"
+            onClick={onClose}
+          >
+            Cancelar
+          </button>
 
-        <button
-          onClick={closeModal}
-          style={{
-            marginLeft: 10,
-            padding: "8px 12px"
-          }}
-        >
-          Cancelar
-        </button>
-
+          <button
+            className="px-3 py-2 text-sm bg-blue-600 text-white rounded"
+            onClick={handleConfirm}
+          >
+            Guardar
+          </button>
+        </div>
       </div>
     </div>
-  );
+  )
 }
