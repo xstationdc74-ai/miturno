@@ -1,76 +1,134 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { createClient } from "@supabase/supabase-js"
 import { useAppointments } from "@/hooks/useAppointments"
 import AppointmentModal from "./AppointmentModal"
 
+const supabase = createClient(
+process.env.NEXT_PUBLIC_SUPABASE_URL!,
+process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
+
 type Appointment = {
-  id?: string
-  start_time: string
-  client_name: string
+start_time:string
+client_name:string
 }
 
-export default function Calendar({ business }: { business: string }) {
+type Service = {
+id:string
+name:string
+duration:number
+}
 
-  const { appointments, createAppointment } = useAppointments(business)
+export default function Calendar({business}:{business:string}){
 
-  const [selectedTime, setSelectedTime] = useState<string | null>(null)
+const {appointments,hours,createAppointment}=useAppointments(business)
 
-  const hours = [
-    "09:00","09:30","10:00","10:30","11:00","11:30",
-    "12:00","12:30","13:00","13:30","14:00","14:30",
-    "15:00","15:30","16:00","16:30","17:00","17:30"
-  ]
+const [services,setServices]=useState<Service[]>([])
+const [selectedService,setSelectedService]=useState<string>("")
+const [selectedTime,setSelectedTime]=useState<string|null>(null)
 
-  const handleConfirm = async (name: string) => {
-    if (!selectedTime) return
-    await createAppointment(selectedTime, name)
-    setSelectedTime(null)
-  }
+useEffect(()=>{
 
-  function getLocalTime(dateString: string) {
-    const date = new Date(dateString)
-    const h = date.getHours().toString().padStart(2,"0")
-    const m = date.getMinutes().toString().padStart(2,"0")
-    return `${h}:${m}`
-  }
+const loadServices=async()=>{
 
-  return (
-    <div className="max-w-sm mx-auto divide-y border rounded-lg overflow-hidden bg-white">
+const {data}=await supabase
+.from("services")
+.select("id,name,duration")
 
-      {hours.map((time) => {
+if(data) setServices(data)
 
-        const appointment = appointments.find(
-          (a: Appointment) => getLocalTime(a.start_time) === time
-        )
+}
 
-        return (
-          <div
-            key={time}
-            onClick={() => !appointment && setSelectedTime(time)}
-            className={`flex items-center justify-between px-4 py-3 text-sm ${
-              appointment
-                ? "bg-red-50 text-red-700 cursor-not-allowed"
-                : "hover:bg-gray-50 cursor-pointer"
-            }`}
-          >
-            <span className="font-medium">{time}</span>
+loadServices()
 
-            {appointment && (
-              <span className="text-gray-700">{appointment.client_name}</span>
-            )}
+},[])
 
-          </div>
-        )
-      })}
+const handleConfirm=async(name:string)=>{
 
-      <AppointmentModal
-        time={selectedTime || ""}
-        open={!!selectedTime}
-        onClose={() => setSelectedTime(null)}
-        onConfirm={handleConfirm}
-      />
+if(!selectedTime) return
 
-    </div>
-  )
+await createAppointment(selectedTime,name)
+
+setSelectedTime(null)
+
+}
+
+function getLocalTime(dateString:string){
+
+const d=new Date(dateString)
+
+const h=d.getHours().toString().padStart(2,"0")
+const m=d.getMinutes().toString().padStart(2,"0")
+
+return `${h}:${m}`
+
+}
+
+return(
+
+<div className="max-w-sm mx-auto space-y-4">
+
+<select
+className="w-full border p-2 rounded"
+value={selectedService}
+onChange={(e)=>setSelectedService(e.target.value)}
+>
+
+<option value="">Seleccionar servicio</option>
+
+{services.map(s=>(
+<option key={s.id} value={s.id}>
+{s.name}
+</option>
+))}
+
+</select>
+
+<div className="divide-y border rounded-lg overflow-hidden bg-white">
+
+{hours.map((time)=>{
+
+const appointment=appointments.find(
+(a:Appointment)=>getLocalTime(a.start_time)===time
+)
+
+return(
+
+<div
+key={time}
+onClick={()=>!appointment && selectedService && setSelectedTime(time)}
+className={`flex justify-between px-4 py-3 text-sm ${
+appointment
+? "bg-gray-200 text-gray-600"
+: "hover:bg-gray-50 cursor-pointer"
+}`}
+>
+
+<span>{time}</span>
+
+<span>
+{appointment ? "ocupado" : "disponible"}
+</span>
+
+</div>
+
+)
+
+})}
+
+</div>
+
+<AppointmentModal
+time={selectedTime || ""}
+open={!!selectedTime}
+onClose={()=>setSelectedTime(null)}
+onConfirm={handleConfirm}
+/>
+
+</div>
+
+)
+
 }
