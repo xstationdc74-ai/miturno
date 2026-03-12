@@ -1,5 +1,3 @@
-// components/Calendar.tsx
-
 "use client"
 
 import { useState } from "react"
@@ -32,10 +30,8 @@ export default function Calendar({ business }: { business: string }) {
 
   function getLocalTime(dateString: string) {
     const date = new Date(dateString)
-
     const h = date.getHours().toString().padStart(2,"0")
     const m = date.getMinutes().toString().padStart(2,"0")
-
     return `${h}:${m}`
   }
 

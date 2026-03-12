@@ -1,5 +1,3 @@
-// app/book/[business]/page.tsx
-
 "use client"
 
 import { useParams } from "next/navigation"
@@ -22,7 +20,7 @@ export default function BusinessBookingPage() {
         Negocio: {business}
       </p>
 
-      <Calendar />
+      <Calendar business={business} />
 
     </main>
   )
