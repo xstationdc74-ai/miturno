@@ -12,17 +12,9 @@ type Appointment = {
   client_name: string
 }
 
-function getLocalTime(dateString: string) {
-  const date = new Date(dateString)
+export default function Calendar({ business }: { business: string }) {
 
-  const hours = date.getHours().toString().padStart(2, "0")
-  const minutes = date.getMinutes().toString().padStart(2, "0")
-
-  return `${hours}:${minutes}`
-}
-
-export default function Calendar() {
-  const { appointments, createAppointment } = useAppointments()
+  const { appointments, createAppointment } = useAppointments(business)
 
   const [selectedTime, setSelectedTime] = useState<string | null>(null)
 
@@ -38,12 +30,22 @@ export default function Calendar() {
     setSelectedTime(null)
   }
 
+  function getLocalTime(dateString: string) {
+    const date = new Date(dateString)
+
+    const h = date.getHours().toString().padStart(2,"0")
+    const m = date.getMinutes().toString().padStart(2,"0")
+
+    return `${h}:${m}`
+  }
+
   return (
     <div className="max-w-sm mx-auto divide-y border rounded-lg overflow-hidden bg-white">
+
       {hours.map((time) => {
 
-        const appointment = appointments.find((a: Appointment) =>
-          getLocalTime(a.start_time) === time
+        const appointment = appointments.find(
+          (a: Appointment) => getLocalTime(a.start_time) === time
         )
 
         return (
@@ -61,6 +63,7 @@ export default function Calendar() {
             {appointment && (
               <span className="text-gray-700">{appointment.client_name}</span>
             )}
+
           </div>
         )
       })}
@@ -71,6 +74,7 @@ export default function Calendar() {
         onClose={() => setSelectedTime(null)}
         onConfirm={handleConfirm}
       />
+
     </div>
   )
 }

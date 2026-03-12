@@ -16,7 +16,7 @@ type Appointment = {
   client_name: string
 }
 
-const BUSINESS_ID = "00000000-0000-0000-0000-000000000001"
+const BUSINESS_ID = "df7a446d-13f5-42a6-a913-c257e87b01ef"
 const SERVICE_ID = "00000000-0000-0000-0000-000000000001"
 
 export function useAppointments() {
