@@ -1,27 +1,22 @@
-"use client"
-
-import { useParams } from "next/navigation"
 import Calendar from "@/components/Calendar"
+import SplashScreen from "@/components/SplashScreen"
 
-export default function BusinessBookingPage() {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ business: string }>
+}) {
 
-  const params = useParams()
-
-  const business = params.business as string
+  const { business } = await params
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-start p-6 bg-gray-50">
 
-      <h1 className="text-2xl font-semibold mb-2">
-        Reservar turno
-      </h1>
-
-      <p className="text-sm text-gray-500 mb-6">
-        Negocio: {business}
-      </p>
+    <SplashScreen>
 
       <Calendar business={business} />
 
-    </main>
+    </SplashScreen>
+
   )
+
 }

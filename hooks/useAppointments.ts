@@ -55,7 +55,10 @@ export function useAppointments(slug: string, date: string) {
         .eq("day_of_week", day)
         .single()
 
-      if (!data) return
+      if (!data) {
+        setHours([])
+        return
+      }
 
       const start = data.open_time.slice(0,5)
       const end = data.close_time.slice(0,5)
