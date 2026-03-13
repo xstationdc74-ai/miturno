@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
 type Appointment = {
   id?: string
@@ -14,7 +14,7 @@ type Appointment = {
   client_name: string
 }
 
-export function useAppointments(slug: string) {
+export function useAppointments(slug: string, date: string) {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [hours, setHours] = useState<string[]>([])
@@ -34,7 +34,7 @@ export function useAppointments(slug: string) {
 
     }
 
-    if (slug) loadBusiness()
+    loadBusiness()
 
   }, [slug])
 
@@ -44,7 +44,8 @@ export function useAppointments(slug: string) {
 
     const loadHours = async () => {
 
-      const today = new Date().getDay()
+      const d = new Date(date)
+      const today = d.getDay()
       const day = today === 0 ? 7 : today
 
       const { data } = await supabase
@@ -85,10 +86,15 @@ export function useAppointments(slug: string) {
 
     const fetchAppointments = async () => {
 
+      const start = `${date} 00:00:00`
+      const end = `${date} 23:59:59`
+
       const { data } = await supabase
         .from("appointments")
         .select("id,start_time,client_name")
         .eq("business_id", businessId)
+        .gte("start_time", start)
+        .lte("start_time", end)
 
       if (data) setAppointments(data)
 
@@ -97,33 +103,13 @@ export function useAppointments(slug: string) {
     loadHours()
     fetchAppointments()
 
-    const channel = supabase
-      .channel("appointments-realtime")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "appointments",
-          filter: `business_id=eq.${businessId}`
-        },
-        () => {
-          fetchAppointments()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-
-  }, [businessId])
+  }, [businessId, date])
 
   const createAppointment = async (time: string, clientName: string) => {
 
     if (!businessId) return
 
-    const startTime = `2026-01-01 ${time}:00`
+    const startTime = `${date} ${time}:00`
 
     await supabase
       .from("appointments")
@@ -142,4 +128,5 @@ export function useAppointments(slug: string) {
     hours,
     createAppointment
   }
+
 }

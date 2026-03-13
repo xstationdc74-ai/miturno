@@ -1,182 +1,120 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { createClient } from "@supabase/supabase-js"
+import { useState } from "react"
 import { useAppointments } from "@/hooks/useAppointments"
 import AppointmentModal from "./AppointmentModal"
 
-const supabase = createClient(
-process.env.NEXT_PUBLIC_SUPABASE_URL!,
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
 type Appointment = {
-start_time:string
-client_name:string
+  start_time: string
+  client_name: string
 }
 
-type Service = {
-id:string
-name:string
-duration:number
-}
+export default function Calendar({ business }: { business: string }) {
 
-export default function Calendar({business}:{business:string}){
+  const today = new Date().toISOString().split("T")[0]
 
-const {appointments,hours,createAppointment}=useAppointments(business)
+  const [selectedDate,setSelectedDate] = useState(today)
 
-const [services,setServices]=useState<Service[]>([])
-const [selectedService,setSelectedService]=useState<Service|null>(null)
-const [selectedTime,setSelectedTime]=useState<string|null>(null)
+  const { appointments, hours, createAppointment } =
+    useAppointments(business, selectedDate)
 
-useEffect(()=>{
+  const [selectedTime,setSelectedTime] = useState<string | null>(null)
 
-const loadServices=async()=>{
+  const handleConfirm = async (name:string)=>{
 
-const {data:biz}=await supabase
-.from("business")
-.select("id")
-.eq("slug",business)
-.single()
+    if(!selectedTime) return
 
-if(!biz) return
+    await createAppointment(selectedTime,name)
 
-const {data}=await supabase
-.from("services")
-.select("id,name,duration")
-.eq("business_id",biz.id)
+    setSelectedTime(null)
 
-if(data) setServices(data)
+  }
 
-}
+  function getTimeFromDB(dateString:string){
 
-loadServices()
+    return dateString.substring(11,16)
 
-},[])
+  }
 
-const handleConfirm=async(name:string)=>{
+  const tomorrow = ()=>{
+    const d=new Date()
+    d.setDate(d.getDate()+1)
+    return d.toISOString().split("T")[0]
+  }
 
-if(!selectedTime) return
+  return(
 
-await createAppointment(selectedTime,name)
+    <div className="max-w-sm mx-auto space-y-4">
 
-setSelectedTime(null)
+      <div className="flex gap-2">
 
-}
+        <button
+        onClick={()=>setSelectedDate(today)}
+        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200"
+        >
+        Hoy
+        </button>
 
-function getLocalTime(dateString:string){
+        <button
+        onClick={()=>setSelectedDate(tomorrow())}
+        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200"
+        >
+        Mañana
+        </button>
 
-const d=new Date(dateString)
+        <input
+        type="date"
+        min={today}
+        className="flex-1 border p-2 rounded"
+        value={selectedDate}
+        onChange={(e)=>setSelectedDate(e.target.value)}
+        />
 
-const h=d.getHours().toString().padStart(2,"0")
-const m=d.getMinutes().toString().padStart(2,"0")
+      </div>
 
-return `${h}:${m}`
+      <div className="divide-y border rounded-lg overflow-hidden bg-white">
 
-}
+        {hours.map((time)=>{
 
-function slotBlocked(time:string){
+          const appointment=appointments.find(
+            (a:Appointment)=>getTimeFromDB(a.start_time)===time
+          )
 
-if(!selectedService) return false
+          return(
 
-const durationSlots=Math.ceil(selectedService.duration/30)
+            <div
+            key={time}
+            onClick={()=>!appointment && setSelectedTime(time)}
+            className={`flex justify-between px-4 py-3 text-sm ${
+              appointment
+              ? "bg-gray-200 text-gray-600"
+              : "hover:bg-gray-50 cursor-pointer"
+            }`}
+            >
 
-const index=hours.indexOf(time)
+              <span>{time}</span>
 
-for(let i=1;i<durationSlots;i++){
+              <span>
+                {appointment ? "ocupado" : "disponible"}
+              </span>
 
-const checkTime=hours[index+i]
+            </div>
 
-if(!checkTime) continue
+          )
 
-const appointment=appointments.find(
-(a:Appointment)=>getLocalTime(a.start_time)===checkTime
-)
+        })}
 
-if(appointment) return true
+      </div>
 
-}
+      <AppointmentModal
+      time={selectedTime || ""}
+      open={!!selectedTime}
+      onClose={()=>setSelectedTime(null)}
+      onConfirm={handleConfirm}
+      />
 
-return false
+    </div>
 
-}
-
-return(
-
-<div className="max-w-sm mx-auto space-y-4">
-
-<select
-className="w-full border p-2 rounded"
-onChange={(e)=>{
-
-const service=services.find(s=>s.id===e.target.value)
-
-if(service) setSelectedService(service)
-
-}}
->
-
-<option value="">Seleccionar servicio</option>
-
-{services.map(s=>(
-<option key={s.id} value={s.id}>
-{s.name}
-</option>
-))}
-
-</select>
-
-<div className="divide-y border rounded-lg overflow-hidden bg-white">
-
-{hours.map((time)=>{
-
-const appointment=appointments.find(
-(a:Appointment)=>getLocalTime(a.start_time)===time
-)
-
-const blocked=slotBlocked(time)
-
-return(
-
-<div
-key={time}
-onClick={()=>{
-
-if(!appointment && !blocked){
-setSelectedTime(time)
-}
-
-}}
-className={`flex justify-between px-4 py-3 text-sm ${
-appointment || blocked
-? "bg-gray-200 text-gray-600"
-: "hover:bg-gray-50 cursor-pointer"
-}`}
->
-
-<span>{time}</span>
-
-<span>
-{appointment || blocked ? "ocupado" : "disponible"}
-</span>
-
-</div>
-
-)
-
-})}
-
-</div>
-
-<AppointmentModal
-time={selectedTime || ""}
-open={!!selectedTime}
-onClose={()=>setSelectedTime(null)}
-onConfirm={handleConfirm}
-/>
-
-</div>
-
-)
+  )
 
 }
