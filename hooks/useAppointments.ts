@@ -14,12 +14,6 @@ type Appointment = {
   client_name: string
 }
 
-type BusinessHour = {
-  day_of_week: number
-  open_time: string
-  close_time: string
-}
-
 export function useAppointments(slug: string) {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
@@ -51,7 +45,6 @@ export function useAppointments(slug: string) {
     const loadHours = async () => {
 
       const today = new Date().getDay()
-
       const day = today === 0 ? 7 : today
 
       const { data } = await supabase
@@ -103,6 +96,26 @@ export function useAppointments(slug: string) {
 
     loadHours()
     fetchAppointments()
+
+    const channel = supabase
+      .channel("appointments-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "appointments",
+          filter: `business_id=eq.${businessId}`
+        },
+        () => {
+          fetchAppointments()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
 
   }, [businessId])
 

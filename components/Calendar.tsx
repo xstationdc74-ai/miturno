@@ -26,16 +26,25 @@ export default function Calendar({business}:{business:string}){
 const {appointments,hours,createAppointment}=useAppointments(business)
 
 const [services,setServices]=useState<Service[]>([])
-const [selectedService,setSelectedService]=useState<string>("")
+const [selectedService,setSelectedService]=useState<Service|null>(null)
 const [selectedTime,setSelectedTime]=useState<string|null>(null)
 
 useEffect(()=>{
 
 const loadServices=async()=>{
 
+const {data:biz}=await supabase
+.from("business")
+.select("id")
+.eq("slug",business)
+.single()
+
+if(!biz) return
+
 const {data}=await supabase
 .from("services")
 .select("id,name,duration")
+.eq("business_id",biz.id)
 
 if(data) setServices(data)
 
@@ -66,14 +75,45 @@ return `${h}:${m}`
 
 }
 
+function slotBlocked(time:string){
+
+if(!selectedService) return false
+
+const durationSlots=Math.ceil(selectedService.duration/30)
+
+const index=hours.indexOf(time)
+
+for(let i=1;i<durationSlots;i++){
+
+const checkTime=hours[index+i]
+
+if(!checkTime) continue
+
+const appointment=appointments.find(
+(a:Appointment)=>getLocalTime(a.start_time)===checkTime
+)
+
+if(appointment) return true
+
+}
+
+return false
+
+}
+
 return(
 
 <div className="max-w-sm mx-auto space-y-4">
 
 <select
 className="w-full border p-2 rounded"
-value={selectedService}
-onChange={(e)=>setSelectedService(e.target.value)}
+onChange={(e)=>{
+
+const service=services.find(s=>s.id===e.target.value)
+
+if(service) setSelectedService(service)
+
+}}
 >
 
 <option value="">Seleccionar servicio</option>
@@ -94,13 +134,21 @@ const appointment=appointments.find(
 (a:Appointment)=>getLocalTime(a.start_time)===time
 )
 
+const blocked=slotBlocked(time)
+
 return(
 
 <div
 key={time}
-onClick={()=>!appointment && selectedService && setSelectedTime(time)}
+onClick={()=>{
+
+if(!appointment && !blocked){
+setSelectedTime(time)
+}
+
+}}
 className={`flex justify-between px-4 py-3 text-sm ${
-appointment
+appointment || blocked
 ? "bg-gray-200 text-gray-600"
 : "hover:bg-gray-50 cursor-pointer"
 }`}
@@ -109,7 +157,7 @@ appointment
 <span>{time}</span>
 
 <span>
-{appointment ? "ocupado" : "disponible"}
+{appointment || blocked ? "ocupado" : "disponible"}
 </span>
 
 </div>
