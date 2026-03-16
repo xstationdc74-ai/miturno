@@ -1,120 +1,85 @@
-"use client"
+'use client'
 
-import { useState } from "react"
-import { useAppointments } from "@/hooks/useAppointments"
-import AppointmentModal from "./AppointmentModal"
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { useAppointments } from '@/hooks/useAppointments'
 
 type Appointment = {
-  start_time: string
+  id: string
   client_name: string
+  start_time: string
+  status: string
 }
 
-export default function Calendar({ business }: { business: string }) {
+export default function Calendar({ businessId }: { businessId: string }) {
 
-  const today = new Date().toISOString().split("T")[0]
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const { completeAppointment } = useAppointments()
 
-  const [selectedDate,setSelectedDate] = useState(today)
+  const loadAppointments = async () => {
 
-  const { appointments, hours, createAppointment } =
-    useAppointments(business, selectedDate)
+    const { data } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('business_id', businessId)
+      .order('start_time')
 
-  const [selectedTime,setSelectedTime] = useState<string | null>(null)
-
-  const handleConfirm = async (name:string)=>{
-
-    if(!selectedTime) return
-
-    await createAppointment(selectedTime,name)
-
-    setSelectedTime(null)
-
+    setAppointments(data || [])
   }
 
-  function getTimeFromDB(dateString:string){
+  useEffect(() => {
+    loadAppointments()
+  }, [])
 
-    return dateString.substring(11,16)
+  const handleComplete = async (id: string) => {
 
+    await completeAppointment(id)
+
+    loadAppointments()
   }
 
-  const tomorrow = ()=>{
-    const d=new Date()
-    d.setDate(d.getDate()+1)
-    return d.toISOString().split("T")[0]
-  }
+  return (
 
-  return(
+    <div className="space-y-4">
 
-    <div className="max-w-sm mx-auto space-y-4">
+      {appointments.map((a) => (
 
-      <div className="flex gap-2">
-
-        <button
-        onClick={()=>setSelectedDate(today)}
-        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200"
+        <div
+          key={a.id}
+          className="border p-3 rounded flex justify-between items-center"
         >
-        Hoy
-        </button>
 
-        <button
-        onClick={()=>setSelectedDate(tomorrow())}
-        className="px-3 py-2 border rounded bg-gray-100 hover:bg-gray-200"
-        >
-        Mañana
-        </button>
+          <div>
 
-        <input
-        type="date"
-        min={today}
-        className="flex-1 border p-2 rounded"
-        value={selectedDate}
-        onChange={(e)=>setSelectedDate(e.target.value)}
-        />
-
-      </div>
-
-      <div className="divide-y border rounded-lg overflow-hidden bg-white">
-
-        {hours.map((time)=>{
-
-          const appointment=appointments.find(
-            (a:Appointment)=>getTimeFromDB(a.start_time)===time
-          )
-
-          return(
-
-            <div
-            key={time}
-            onClick={()=>!appointment && setSelectedTime(time)}
-            className={`flex justify-between px-4 py-3 text-sm ${
-              appointment
-              ? "bg-gray-200 text-gray-600"
-              : "hover:bg-gray-50 cursor-pointer"
-            }`}
-            >
-
-              <span>{time}</span>
-
-              <span>
-                {appointment ? "ocupado" : "disponible"}
-              </span>
-
+            <div className="font-semibold">
+              {a.client_name}
             </div>
 
-          )
+            <div className="text-sm text-gray-500">
+              {new Date(a.start_time).toLocaleTimeString()}
+            </div>
 
-        })}
+            <div className="text-xs">
+              {a.status}
+            </div>
 
-      </div>
+          </div>
 
-      <AppointmentModal
-      time={selectedTime || ""}
-      open={!!selectedTime}
-      onClose={()=>setSelectedTime(null)}
-      onConfirm={handleConfirm}
-      />
+          {a.status !== 'completed' && (
+
+            <button
+              onClick={() => handleComplete(a.id)}
+              className="bg-green-500 text-white px-3 py-1 rounded"
+            >
+              Finalizar
+            </button>
+
+          )}
+
+        </div>
+
+      ))}
 
     </div>
-
   )
-
 }

@@ -1,135 +1,93 @@
-"use client"
+import { supabase } from "@/lib/supabase/client"
 
-import { useEffect, useState } from "react"
-import { createClient } from "@supabase/supabase-js"
+export function useAppointments() {
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+  const createAppointment = async ({
+    business_id,
+    service_id,
+    client_name,
+    client_phone,
+    start_time
+  }: {
+    business_id: string
+    service_id: string
+    client_name: string
+    client_phone: string
+    start_time: string
+  }) => {
 
-type Appointment = {
-  id?: string
-  start_time: string
-  client_name: string
-}
+    const { data: service } = await supabase
+      .from("services")
+      .select("price")
+      .eq("id", service_id)
+      .single()
 
-export function useAppointments(slug: string, date: string) {
+    const price = service?.price ?? 0
 
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [hours, setHours] = useState<string[]>([])
-  const [businessId, setBusinessId] = useState<string | null>(null)
-
-  useEffect(() => {
-
-    const loadBusiness = async () => {
-
-      const { data } = await supabase
-        .from("business")
-        .select("id")
-        .eq("slug", slug)
-        .single()
-
-      if (data) setBusinessId(data.id)
-
-    }
-
-    loadBusiness()
-
-  }, [slug])
-
-  useEffect(() => {
-
-    if (!businessId) return
-
-    const loadHours = async () => {
-
-      const d = new Date(date)
-      const today = d.getDay()
-      const day = today === 0 ? 7 : today
-
-      const { data } = await supabase
-        .from("business_hours")
-        .select("open_time,close_time")
-        .eq("business_id", businessId)
-        .eq("day_of_week", day)
-        .single()
-
-      if (!data) {
-        setHours([])
-        return
-      }
-
-      const start = data.open_time.slice(0,5)
-      const end = data.close_time.slice(0,5)
-
-      const slots:string[] = []
-
-      let [h,m] = start.split(":").map(Number)
-      const [eh,em] = end.split(":").map(Number)
-
-      while (h < eh || (h === eh && m < em)) {
-
-        const hh = h.toString().padStart(2,"0")
-        const mm = m.toString().padStart(2,"0")
-
-        slots.push(`${hh}:${mm}`)
-
-        m += 30
-        if (m === 60) {
-          m = 0
-          h++
-        }
-
-      }
-
-      setHours(slots)
-
-    }
-
-    const fetchAppointments = async () => {
-
-      const start = `${date} 00:00:00`
-      const end = `${date} 23:59:59`
-
-      const { data } = await supabase
-        .from("appointments")
-        .select("id,start_time,client_name")
-        .eq("business_id", businessId)
-        .gte("start_time", start)
-        .lte("start_time", end)
-
-      if (data) setAppointments(data)
-
-    }
-
-    loadHours()
-    fetchAppointments()
-
-  }, [businessId, date])
-
-  const createAppointment = async (time: string, clientName: string) => {
-
-    if (!businessId) return
-
-    const startTime = `${date} ${time}:00`
-
-    await supabase
+    const { data, error } = await supabase
       .from("appointments")
       .insert({
-        business_id: businessId,
-        client_name: clientName,
-        client_phone: "",
-        start_time: startTime,
-        status: "booked"
+        business_id,
+        service_id,
+        client_name,
+        client_phone,
+        start_time,
+        status: "booked",
+        price_snapshot: price
       })
+      .select()
+      .single()
+
+    if (error) {
+      console.error(error)
+      throw error
+    }
+
+    return data
+  }
+
+  const completeAppointment = async (appointment_id: string) => {
+
+    console.log("COMPLETING", appointment_id)
+
+    const { error: updateError } = await supabase
+      .from("appointments")
+      .update({ status: "completed" })
+      .eq("id", appointment_id)
+
+    if (updateError) {
+      console.error("UPDATE ERROR", updateError)
+      return
+    }
+
+    const { data: appointment } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("id", appointment_id)
+      .single()
+
+    if (!appointment) return
+
+    const { error: salesError } = await supabase
+      .from("sales")
+      .upsert(
+        {
+          business_id: appointment.business_id,
+          appointment_id: appointment.id,
+          amount: appointment.price_snapshot
+        },
+        { onConflict: "appointment_id" }
+      )
+
+    if (salesError) {
+      console.error("SALES ERROR", salesError)
+    }
 
   }
 
   return {
-    appointments,
-    hours,
-    createAppointment
+    createAppointment,
+    completeAppointment
   }
 
 }

@@ -1,14 +1,8 @@
-import Calendar from "@/components/Calendar"
-import SplashScreen from "@/components/SplashScreen"
-import FavoriteBusiness from "@/components/FavoriteBusiness"
+import { supabase } from "@/lib/supabase/client"
 import BusinessHero from "@/components/BusinessHero"
+import CalendarBooking from "@/components/CalendarBooking"
 
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+export const dynamic = "force-dynamic"
 
 export default async function Page({
   params,
@@ -18,33 +12,29 @@ export default async function Page({
 
   const { business } = await params
 
-  const { data } = await supabase
+  const { data: biz } = await supabase
     .from("business")
-    .select("name,description,cover_image")
+    .select("*")
     .eq("slug", business)
     .single()
 
-  if (!data) return null
+  if (!biz) {
+    return <div className="p-10">Negocio no encontrado</div>
+  }
 
   return (
 
-    <SplashScreen>
+    <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-sm mx-auto mt-6 space-y-6">
+      <BusinessHero business={biz} />
 
-        <BusinessHero
-          name={data.name}
-          description={data.description}
-          image={data.cover_image}
-        />
+      <div className="p-6">
 
-        <FavoriteBusiness slug={business} />
-
-        <Calendar business={business} />
+        <CalendarBooking businessId={biz.id} />
 
       </div>
 
-    </SplashScreen>
+    </div>
 
   )
 

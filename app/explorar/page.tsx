@@ -1,64 +1,141 @@
-import { createClient } from "@supabase/supabase-js"
-import Link from "next/link"
+'use client'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { supabase } from '@/lib/supabase/client'
+import Link from 'next/link'
 
-export default async function Page() {
+type Business = {
+  id: string
+  name: string
+  slug: string
+  description: string
+  cover_image: string
+  type: string
+}
 
-  const { data } = await supabase
-    .from("business")
-    .select("name,slug,cover_image,description")
+export default function ExplorarPage() {
+  const [businesses, setBusinesses] = useState<Business[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const searchParams = useSearchParams()
+  const type = searchParams.get('type')
+
+  useEffect(() => {
+    fetchBusinesses()
+  }, [type])
+
+  const fetchBusinesses = async () => {
+    setLoading(true)
+
+    let query = supabase.from('business').select('*')
+
+    if (type) {
+      query = query.eq('type', type)
+    }
+
+    const { data } = await query
+
+    setBusinesses(data || [])
+    setLoading(false)
+  }
 
   return (
+    <div style={{maxWidth: 900, margin: '0 auto', padding: 20}}>
 
-    <div className="max-w-md mx-auto mt-10 space-y-6">
-
-      <h1 className="text-2xl font-semibold text-center">
+      <h1 style={{fontSize: 28, fontWeight: 'bold', marginBottom: 20}}>
         Explorar negocios
       </h1>
 
-      {data?.map((business) => (
+      <div style={{display:'flex', gap:10, flexWrap:'wrap', marginBottom:20}}>
 
-        <Link
-          key={business.slug}
-          href={`/book/${business.slug}`}
-          className="block border rounded-xl overflow-hidden"
-        >
-
-          {business.cover_image && (
-
-            <img
-              src={business.cover_image}
-              className="w-full h-32 object-cover"
-            />
-
-          )}
-
-          <div className="p-4 space-y-1">
-
-            <h2 className="font-semibold">
-              {business.name}
-            </h2>
-
-            {business.description && (
-
-              <p className="text-sm text-gray-500">
-                {business.description}
-              </p>
-
-            )}
-
-          </div>
-
+        <Link href="/explorar">
+          <button style={{padding:'8px 14px', background:'#eee', borderRadius:6}}>
+            Todos
+          </button>
         </Link>
 
-      ))}
+        <Link href="/explorar?type=barberia">
+          <button style={{padding:'8px 14px', background:'#eee', borderRadius:6}}>
+            Barberías
+          </button>
+        </Link>
+
+        <Link href="/explorar?type=comida">
+          <button style={{padding:'8px 14px', background:'#eee', borderRadius:6}}>
+            Comida
+          </button>
+        </Link>
+
+        <Link href="/explorar?type=arte">
+          <button style={{padding:'8px 14px', background:'#eee', borderRadius:6}}>
+            Arte
+          </button>
+        </Link>
+
+        <Link href="/explorar?type=bienestar">
+          <button style={{padding:'8px 14px', background:'#eee', borderRadius:6}}>
+            Bienestar
+          </button>
+        </Link>
+
+      </div>
+
+      {loading && <p>Cargando...</p>}
+
+      <div style={{
+        display:'grid',
+        gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))',
+        gap:20
+      }}>
+
+        {businesses.map((b) => (
+          <Link key={b.id} href={`/book/${b.slug}`}>
+
+            <div style={{
+              border:'1px solid #ddd',
+              borderRadius:8,
+              overflow:'hidden',
+              cursor:'pointer'
+            }}>
+
+              {b.cover_image && (
+                <img
+                  src={b.cover_image}
+                  style={{width:'100%', height:160, objectFit:'cover'}}
+                />
+              )}
+
+              <div style={{padding:12}}>
+
+                <h2 style={{fontSize:18, fontWeight:600}}>
+                  {b.name}
+                </h2>
+
+                <p style={{fontSize:14, color:'#666'}}>
+                  {b.description}
+                </p>
+
+                <div style={{
+                  marginTop:6,
+                  fontSize:12,
+                  background:'#eee',
+                  display:'inline-block',
+                  padding:'2px 6px',
+                  borderRadius:4
+                }}>
+                  {b.type}
+                </div>
+
+              </div>
+
+            </div>
+
+          </Link>
+        ))}
+
+      </div>
 
     </div>
-
   )
-
 }
