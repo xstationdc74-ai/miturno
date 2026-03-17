@@ -5,18 +5,25 @@ import { useEffect } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
+// ✅ FIX REAL (Next compatible)
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png"
+import markerIcon from "leaflet/dist/images/marker-icon.png"
+import markerShadow from "leaflet/dist/images/marker-shadow.png"
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x.src,
+  iconUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+})
+
 type Business = {
   name: string
   slug: string
   lat: number
   lng: number
+  cover_image?: string
+  type?: string
 }
-
-const icon = new L.Icon({
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41]
-})
 
 function LocateUser() {
 
@@ -29,21 +36,13 @@ function LocateUser() {
     navigator.geolocation.getCurrentPosition(
 
       (pos) => {
-
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
-
-        map.setView([lat, lng], 14)
-
-        L.marker([lat, lng])
-          .addTo(map)
-          .bindPopup("Estás aquí")
-          .openPopup()
-
+        map.setView([lat, lng], 15)
       },
 
       () => {
-        console.log("Geolocation blocked")
+        map.setView([-40.7612, -71.6463], 15)
       },
 
       {
@@ -62,14 +61,12 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
   return (
 
     <MapContainer
-      center={[-40.7612, -71.6463] as [number, number]}
-      zoom={13}
-      style={{ height: "500px", width: "100%" }}
+      center={[-40.7612, -71.6463]}
+      zoom={15}
+      style={{ height: "70vh", width: "100%" }}
     >
 
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
       <LocateUser />
 
@@ -77,20 +74,45 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
         <Marker
           key={b.slug}
-          position={[b.lat, b.lng] as [number, number]}
-          icon={icon}
+          position={[b.lat, b.lng]}
         >
 
           <Popup>
 
-            <div>
+            <div className="w-[220px]">
 
-              <strong>{b.name}</strong>
+              <div className="w-full h-28 bg-gray-200 rounded-lg overflow-hidden mb-2">
+                {b.cover_image ? (
+                  <img
+                    src={b.cover_image}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                    Sin imagen
+                  </div>
+                )}
+              </div>
 
-              <br />
+              <div className="space-y-1">
 
-              <a href={`/book/${b.slug}`}>
-                Reservar turno
+                <div className="text-sm font-semibold">
+                  {b.name}
+                </div>
+
+                {b.type && (
+                  <div className="text-xs text-gray-500">
+                    {b.type}
+                  </div>
+                )}
+
+              </div>
+
+              <a
+                href={`/book/${b.slug}`}
+                className="block mt-3 text-center bg-green-600 text-white text-sm py-2 rounded-lg"
+              >
+                Reservar
               </a>
 
             </div>

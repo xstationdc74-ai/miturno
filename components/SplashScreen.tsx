@@ -2,41 +2,46 @@
 
 import { useEffect, useState } from "react"
 
-export default function SplashScreen({children}:{children:React.ReactNode}){
+export default function SplashScreen({
+  children,
+  logo = "/logo-kume.png",
+  title = "Kume",
+}: {
+  children: React.ReactNode
+  logo?: string
+  title?: string
+}) {
 
-const [showSplash,setShowSplash]=useState(true)
+  const [showSplash, setShowSplash] = useState(true)
 
-useEffect(()=>{
+  useEffect(() => {
 
-const timer=setTimeout(()=>{
-setShowSplash(false)
-},1500)
+    const timer = setTimeout(() => {
+      setShowSplash(false)
+    }, 1500)
 
-return ()=>clearTimeout(timer)
+    return () => clearTimeout(timer)
 
-},[])
+  }, [])
 
-if(showSplash){
+  if (showSplash) {
 
-return(
+    return (
 
-<div className="flex flex-col items-center justify-center h-screen bg-black text-white">
+      <div className="flex flex-col items-center justify-center h-screen bg-white">
 
-<img
-src="/logo-barberia2.png"
-className="w-20 mb-6"
-/>
+      <img
+         src={logo}
+    className="w-48 md:w-72 animate-fade-in"
+      />
 
-<h1 className="text-2xl font-semibold">
-Bienvenido
-</h1>
+      
 
-</div>
+    </div>
 
-)
+    )
 
-}
+  }
 
-return <>{children}</>
-
+  return <>{children}</>
 }

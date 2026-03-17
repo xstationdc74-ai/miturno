@@ -24,13 +24,49 @@ export default async function Page({
 
   return (
 
-    <div className="max-w-5xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
 
+      {/* HERO */}
       <BusinessHero business={biz} />
 
-      <div className="p-6">
+      {/* CONTENIDO */}
+      <div className="grid md:grid-cols-3 gap-6">
 
-        <CalendarBooking businessId={biz.id} />
+        {/* CALENDARIO */}
+        <div className="md:col-span-2 bg-white rounded-xl shadow-sm p-4">
+
+          <h2 className="text-lg font-semibold mb-4">
+            Seleccioná un turno
+          </h2>
+
+          <CalendarBooking businessId={biz.id} />
+
+        </div>
+
+        {/* INFO LATERAL */}
+        <div className="bg-white rounded-xl shadow-sm p-4 h-fit">
+
+          <h3 className="font-semibold mb-2">
+            {biz.name}
+          </h3>
+
+          {biz.description && (
+            <p className="text-sm text-gray-600 mb-3">
+              {biz.description}
+            </p>
+          )}
+
+          <div className="text-xs text-gray-500 space-y-1">
+
+            <div>📍 Villa La Angostura</div>
+
+            {biz.type && (
+              <div>🏷 {biz.type}</div>
+            )}
+
+          </div>
+
+        </div>
 
       </div>
 

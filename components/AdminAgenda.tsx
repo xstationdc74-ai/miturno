@@ -15,6 +15,8 @@ type Appointment = {
 export default function AdminAgenda({ businessId }: { businessId: string }) {
 
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [total,setTotal] = useState(0)
+
   const { completeAppointment } = useAppointments()
 
   useEffect(() => {
@@ -35,6 +37,17 @@ export default function AdminAgenda({ businessId }: { businessId: string }) {
       .order("start_time")
 
     setAppointments(data || [])
+
+    const { data: sales } = await supabase
+      .from("sales")
+      .select("amount")
+      .eq("business_id", businessId)
+      .gte("created_at", `${today}T00:00:00`)
+      .lte("created_at", `${today}T23:59:59`)
+
+    const sum = sales?.reduce((acc, s) => acc + s.amount, 0) || 0
+
+    setTotal(sum)
   }
 
   const handleComplete = async (id: string) => {
@@ -44,69 +57,90 @@ export default function AdminAgenda({ businessId }: { businessId: string }) {
     setAppointments(prev =>
       prev.filter(a => a.id !== id)
     )
+
+    loadAppointments()
   }
 
   return (
-    <div style={{ padding: 20 }}>
 
-      <h2 style={{ fontSize: 22, fontWeight: 600, marginBottom: 20 }}>
-        Agenda de hoy
-      </h2>
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
+
+      <div>
+
+        <h2 className="text-xl font-semibold">
+          Agenda de hoy
+        </h2>
+
+        <p className="text-sm text-gray-500">
+          Turnos pendientes
+        </p>
+
+      </div>
+
+      <div className="bg-green-600 text-white p-4 rounded-xl flex justify-between items-center">
+
+        <div className="text-sm">
+          Total de hoy
+        </div>
+
+        <div className="text-lg font-semibold">
+          ${total}
+        </div>
+
+      </div>
 
       {appointments.length === 0 && (
-        <div style={{ color: "#666" }}>
+
+        <div className="text-sm text-gray-500 bg-gray-100 p-4 rounded-lg">
           No hay turnos pendientes
         </div>
+
       )}
 
-      {appointments.map((a) => {
+      <div className="space-y-3">
 
-        const time = new Date(a.start_time)
-          .toTimeString()
-          .slice(0, 5)
+        {appointments.map((a) => {
 
-        return (
-          <div
-            key={a.id}
-            style={{
-              border: "1px solid #ddd",
-              padding: 12,
-              borderRadius: 6,
-              marginBottom: 10,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}
-          >
+          const time = new Date(a.start_time)
+            .toTimeString()
+            .slice(0, 5)
 
-            <div>
+          return (
 
-              <div style={{ fontWeight: 600 }}>
-                {time} — {a.client_name}
+            <div
+              key={a.id}
+              className="flex items-center justify-between p-4 rounded-xl border border-gray-200 bg-white shadow-sm"
+            >
+
+              <div className="space-y-1">
+
+                <div className="text-sm font-semibold">
+                  {time} — {a.client_name}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  ${a.price_snapshot}
+                </div>
+
               </div>
 
-              <div style={{ fontSize: 13, color: "#666" }}>
-                ${a.price_snapshot}
-              </div>
+              <button
+                onClick={() => handleComplete(a.id)}
+                className="bg-green-600 text-white text-xs px-3 py-1.5 rounded-lg"
+              >
+                Finalizar
+              </button>
 
             </div>
 
-            <button
-              onClick={() => handleComplete(a.id)}
-              style={{
-                padding: "6px 12px",
-                background: "#111",
-                color: "#fff",
-                borderRadius: 4,
-                cursor: "pointer"
-              }}
-            >
-              Finalizar
-            </button>
+          )
 
-          </div>
-        )
-      })}
+        })}
+
+      </div>
+
     </div>
+
   )
+
 }

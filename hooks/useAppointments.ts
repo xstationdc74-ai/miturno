@@ -16,6 +16,7 @@ export function useAppointments() {
     start_time: string
   }) => {
 
+    // 🔹 obtener precio del servicio
     const { data: service } = await supabase
       .from("services")
       .select("price")
@@ -24,6 +25,32 @@ export function useAppointments() {
 
     const price = service?.price ?? 0
 
+    // 🔹 crear cliente si no existe
+    const { data: existingClient } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("business_id", business_id)
+      .eq("phone", client_phone)
+      .maybeSingle()
+
+    let clientId = existingClient?.id
+
+    if (!clientId) {
+
+      const { data: newClient } = await supabase
+        .from("clients")
+        .insert({
+          business_id,
+          name: client_name,
+          phone: client_phone
+        })
+        .select()
+        .single()
+
+      clientId = newClient?.id
+    }
+
+    // 🔹 crear turno
     const { data, error } = await supabase
       .from("appointments")
       .insert({
@@ -47,8 +74,6 @@ export function useAppointments() {
   }
 
   const completeAppointment = async (appointment_id: string) => {
-
-    console.log("COMPLETING", appointment_id)
 
     const { error: updateError } = await supabase
       .from("appointments")

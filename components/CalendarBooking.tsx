@@ -31,6 +31,9 @@ export default function CalendarBooking({
   const [clientName,setClientName] = useState("")
   const [clientPhone,setClientPhone] = useState("")
 
+  const [confirmed,setConfirmed] = useState<any>(null)
+  const [loading,setLoading] = useState(false)
+
   useEffect(()=>{
     loadServices()
     loadSlots()
@@ -122,6 +125,8 @@ export default function CalendarBooking({
 
     if(!selectedService || !selectedSlot) return
 
+    setLoading(true)
+
     const today = new Date().toISOString().split("T")[0]
 
     await createAppointment({
@@ -132,132 +137,212 @@ export default function CalendarBooking({
       start_time:`${today}T${selectedSlot}:00`
     })
 
-    alert("Turno reservado")
+    setConfirmed({
+      service:selectedService,
+      slot:selectedSlot,
+      name:clientName
+    })
 
-    setSelectedSlot(null)
-    setClientName("")
-    setClientPhone("")
-
-    loadSlots()
+    setLoading(false)
   }
+
+  // 🔥 CONFIRMACIÓN
+if(confirmed){
+
+  const today = new Date().toISOString().split("T")[0]
+  const start = `${today}T${confirmed.slot}:00`
+
+  const startDate = new Date(start)
+  const endDate = new Date(startDate.getTime() + confirmed.service.duration * 60000)
+
+  const formatDate = (d: Date) =>
+    d.toISOString().replace(/[-:]/g,"").split(".")[0]
+
+  const calendarUrl = `https://www.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+    confirmed.service.name
+  )}&dates=${formatDate(startDate)}/${formatDate(endDate)}`
+
+  const message = encodeURIComponent(
+    `Hola ${confirmed.name}, tu turno fue confirmado.\n\nServicio: ${confirmed.service.name}\nHorario: ${confirmed.slot}\n\nGracias por elegirnos 🙌`
+  )
+
+  const phone = clientPhone.replace(/\D/g,"")
+  const whatsappUrl = `https://wa.me/${phone}?text=${message}`
 
   return(
 
-    <div style={{padding:20}}>
+    <div className="flex flex-col items-center justify-center text-center py-10 space-y-4">
 
-      <h2 style={{fontSize:20,fontWeight:600,marginBottom:10}}>
-        Elegir horario
+      <div className="text-4xl">✅</div>
+
+      <h2 className="text-lg font-semibold">
+        Turno confirmado
       </h2>
 
-      <div style={{
-        display:"grid",
-        gridTemplateColumns:"repeat(4,1fr)",
-        gap:10,
-        marginBottom:30
-      }}>
+      <div className="text-sm text-gray-600 space-y-1">
 
-        {slots.map(h=>{
-
-          const taken = takenSlots.includes(h)
-
-          return(
-
-            <button
-              key={h}
-              disabled={taken}
-              onClick={()=>setSelectedSlot(h)}
-              style={{
-                padding:10,
-                borderRadius:6,
-                background:taken
-                  ? "#ddd"
-                  : selectedSlot===h
-                  ? "#111"
-                  : "#eee",
-                color:taken
-                  ? "#666"
-                  : selectedSlot===h
-                  ? "#fff"
-                  : "#000",
-                cursor:taken?"not-allowed":"pointer"
-              }}
-            >
-              {taken ? "Ocupado" : h}
-            </button>
-
-          )
-
-        })}
+        <div>{confirmed.service.name}</div>
+        <div>{confirmed.slot}</div>
+        <div>{confirmed.name}</div>
 
       </div>
 
-      <h2 style={{fontSize:20,fontWeight:600,marginBottom:10}}>
-        Servicios
-      </h2>
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        className="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg text-sm"
+      >
+        Enviar por WhatsApp
+      </a>
 
-      <div style={{
-        display:"grid",
-        gridTemplateColumns:"repeat(3,1fr)",
-        gap:10,
-        marginBottom:30
-      }}>
-
-        {services.map(s=>(
-
-          <button
-            key={s.id}
-            onClick={()=>setSelectedService(s)}
-            style={{
-              padding:10,
-              borderRadius:6,
-              background:selectedService?.id===s.id
-                ? "#111"
-                : "#eee",
-              color:selectedService?.id===s.id
-                ? "#fff"
-                : "#000"
-            }}
-          >
-            {s.name} — ${s.price}
-          </button>
-
-        ))}
-
-      </div>
-
-      <input
-        placeholder="Tu nombre"
-        value={clientName}
-        onChange={e=>setClientName(e.target.value)}
-        style={{
-          width:"100%",
-          padding:10,
-          marginBottom:10
-        }}
-      />
-
-      <input
-        placeholder="Teléfono"
-        value={clientPhone}
-        onChange={e=>setClientPhone(e.target.value)}
-        style={{
-          width:"100%",
-          padding:10,
-          marginBottom:20
-        }}
-      />
+      <a
+        href={calendarUrl}
+        target="_blank"
+        className="bg-gray-100 px-4 py-2 rounded-lg text-sm"
+      >
+        Agregar a mi calendario
+      </a>
 
       <button
-        onClick={handleBooking}
-        style={{
-          width:"100%",
-          padding:12,
-          background:"#111",
-          color:"#fff",
-          borderRadius:6
-        }}
+        onClick={()=>window.location.reload()}
+        className="text-sm text-gray-500"
       >
-        Reservar turno
+        Reservar otro turno
+      </button>
+
+    </div>
+
+  )
+
+}
+
+  return(
+
+    <div className="space-y-6">
+
+      {/* HORARIOS */}
+      <div>
+
+        <h2 className="text-sm font-semibold mb-3">
+          Horarios disponibles
+        </h2>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+
+          {slots.map(h=>{
+
+            const taken = takenSlots.includes(h)
+            const selected = selectedSlot === h
+
+            return(
+
+              <button
+                key={h}
+                disabled={taken}
+                onClick={()=>setSelectedSlot(h)}
+                className={`
+                  h-10 rounded-lg text-sm transition
+                  ${taken
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : selected
+                    ? "bg-green-600 text-white"
+                    : "bg-gray-100 hover:bg-gray-200"
+                  }
+                `}
+              >
+                {taken ? "—" : h}
+              </button>
+
+            )
+
+          })}
+
+        </div>
+
+      </div>
+
+      {/* SERVICIOS */}
+      <div>
+
+        <h2 className="text-sm font-semibold mb-3">
+          Servicios
+        </h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+          {services.map(s=>{
+
+            const selected = selectedService?.id === s.id
+
+            return(
+
+              <button
+                key={s.id}
+                onClick={()=>setSelectedService(s)}
+                className={`
+                  text-left p-3 rounded-lg border transition
+                  ${selected
+                    ? "border-green-600 bg-green-50"
+                    : "border-gray-200 hover:border-gray-300"
+                  }
+                `}
+              >
+                <div className="font-medium text-sm">
+                  {s.name}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  ${s.price} • {s.duration} min
+                </div>
+
+              </button>
+
+            )
+
+          })}
+
+        </div>
+
+      </div>
+
+      {/* FORM */}
+      <div className="space-y-3">
+
+        <input
+          placeholder="Tu nombre"
+          value={clientName}
+          onChange={e=>setClientName(e.target.value)}
+          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm"
+        />
+
+        <input
+          placeholder="Teléfono"
+          value={clientPhone}
+          onChange={e=>setClientPhone(e.target.value)}
+          className="w-full h-10 px-3 rounded-lg border border-gray-200 text-sm"
+        />
+
+      </div>
+
+      {/* CTA */}
+      <button
+        onClick={handleBooking}
+        disabled={!selectedService || !selectedSlot || loading}
+        className={`
+          w-full h-11 rounded-lg text-sm font-medium transition flex items-center justify-center gap-2
+          ${selectedService && selectedSlot
+            ? "bg-green-600 text-white"
+            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          }
+        `}
+      >
+
+        {loading && (
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+        )}
+
+        {loading ? "Reservando..." : "Confirmar turno"}
+
       </button>
 
     </div>
