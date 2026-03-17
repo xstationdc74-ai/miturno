@@ -3,21 +3,25 @@ import AdminAgenda from "@/components/AdminAgenda"
 import BusinessBannerUpload from "@/components/BusinessBannerUpload"
 import BusinessQR from "@/components/BusinessQR"
 import BusinessSettings from "@/components/BusinessSettings"
+import GallerySection from "@/components/GallerySection"
+import AdminRestaurant from "@/components/AdminRestaurant"
+import ProductManager from "@/components/ProductManager"
+import CashSummary from "@/components/CashSummary"
 
 export const dynamic = "force-dynamic"
 
 export default async function Page({
   params,
 }: {
-  params: Promise<{ business: string }>
+  params: Promise<{ slug: string }>
 }) {
 
-  const { business } = await params
+  const { slug } = await params
 
   const { data: biz } = await supabase
     .from("business")
     .select("*")
-    .eq("slug", business)
+    .eq("slug", slug)
     .single()
 
   if (!biz) {
@@ -28,19 +32,26 @@ export default async function Page({
 
     <div className="max-w-5xl mx-auto p-6 space-y-8">
 
+      {/* HEADER */}
       <div>
+
         <h1 className="text-2xl font-semibold">
           Panel — {biz.name}
         </h1>
+
         <p className="text-sm text-gray-500">
           Gestioná tu negocio
         </p>
+
       </div>
 
+      {/* GRID */}
       <div className="grid md:grid-cols-2 gap-6">
 
+        {/* IZQUIERDA */}
         <div className="space-y-6">
 
+          {/* CONFIG */}
           <div className="bg-white p-4 rounded-xl border">
             <h2 className="text-sm font-semibold mb-3">
               Configuración
@@ -48,6 +59,7 @@ export default async function Page({
             <BusinessSettings business={biz} />
           </div>
 
+          {/* BANNER */}
           <div className="bg-white p-4 rounded-xl border">
             <h2 className="text-sm font-semibold mb-3">
               Banner
@@ -55,11 +67,17 @@ export default async function Page({
             <BusinessBannerUpload businessId={biz.id} />
           </div>
 
+          {/* GALERÍA */}
+          <GallerySection businessId={biz.id} />
+
         </div>
 
+        {/* DERECHA */}
         <div className="space-y-6">
 
+          {/* QR */}
           <div className="bg-white p-4 rounded-xl border text-center">
+
             <h2 className="text-sm font-semibold mb-3">
               QR de reservas
             </h2>
@@ -71,17 +89,29 @@ export default async function Page({
             <p className="text-xs text-gray-500 mt-2">
               Escaneá para reservar turno
             </p>
+
           </div>
 
         </div>
 
       </div>
 
+      {/* AGENDA */}
       <div>
         <AdminAgenda businessId={biz.id} />
+      </div>
+
+
+<ProductManager businessId={biz.id} />
+<CashSummary businessId={biz.id} />
+
+      {/* RESTAURANTE */}
+      <div>
+        <AdminRestaurant businessId={biz.id} />
       </div>
 
     </div>
 
   )
+
 }

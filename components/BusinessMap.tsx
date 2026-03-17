@@ -70,7 +70,9 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
       <LocateUser />
 
-      {businesses.map((b) => (
+      {businesses
+         .filter(b => b.lat && b.lng)
+         .map((b) => (
 
         <Marker
           key={b.slug}

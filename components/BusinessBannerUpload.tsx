@@ -21,7 +21,6 @@ export default function BusinessBannerUpload({ businessId }:{businessId:string})
     setUploading(true)
 
     const extension = file.name.split(".").pop()
-
     const fileName = `${businessId}-${Date.now()}.${extension}`
 
     const { error:uploadError } = await supabase.storage
@@ -40,8 +39,6 @@ export default function BusinessBannerUpload({ businessId }:{businessId:string})
 
     const publicUrl = data.publicUrl
 
-    console.log("NEW BANNER URL", publicUrl)
-
     const { error:updateError } = await supabase
       .from("business")
       .update({ cover_image: publicUrl })
@@ -59,30 +56,23 @@ export default function BusinessBannerUpload({ businessId }:{businessId:string})
 
   return(
 
-    <div style={{marginBottom:20}}>
+    <div>
 
-      <label
-        style={{
-          display:"block",
-          marginBottom:6,
-          fontWeight:600
-        }}
-      >
+      <label className="block text-sm font-semibold mb-2">
         Banner del negocio
       </label>
 
-      {uploading ? (
+      <label className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg text-sm cursor-pointer">
 
-        <div>Subiendo banner...</div>
-
-      ) : (
+        {uploading ? "Subiendo..." : "Subir banner"}
 
         <input
           type="file"
           onChange={handleUpload}
+          className="hidden"
         />
 
-      )}
+      </label>
 
     </div>
 
