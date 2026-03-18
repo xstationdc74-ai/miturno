@@ -1,48 +1,44 @@
+"use client"
+
 type Business = {
-  id: string
   name: string
-  description: string | null
-  cover_image: string | null
+  description?: string
+  cover_image?: string
 }
 
 export default function BusinessHero({ business }: { business: Business }) {
 
   return (
 
-    <div>
+    <div className="p-6">
 
-      {business.cover_image && (
+      {/* IMAGEN / LOGO */}
+      <div className="w-full h-48 bg-gray-200 rounded-xl overflow-hidden mb-4 flex items-center justify-center">
 
-        <div
-          style={{
-            width: "100%",
-            height: 220,
-            overflow: "hidden"
-          }}
-        >
+        {business.cover_image ? (
           <img
             src={business.cover_image}
-            alt={business.name}
-            style={{
-              width: "100%",
-              height: "100%",
-              objectFit: "cover"
-            }}
+            className="max-h-full max-w-full object-contain"
           />
-        </div>
+        ) : (
+          <div className="text-xs text-gray-400">
+            Sin imagen
+          </div>
+        )}
 
-      )}
+      </div>
 
-      <div style={{ padding: 20 }}>
+      {/* INFO */}
+      <div className="space-y-1">
 
-        <h1 style={{ fontSize: 28, fontWeight: 700 }}>
+        <h1 className="text-2xl font-semibold">
           {business.name}
         </h1>
 
         {business.description && (
-          <p style={{ color: "#555", marginTop: 8 }}>
+          <div className="text-sm text-gray-500">
             {business.description}
-          </p>
+          </div>
         )}
 
       </div>

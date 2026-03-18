@@ -7,6 +7,7 @@ import GallerySection from "@/components/GallerySection"
 import AdminRestaurant from "@/components/AdminRestaurant"
 import ProductManager from "@/components/ProductManager"
 import CashSummary from "@/components/CashSummary"
+import AdminStock from "@/components/AdminStock"
 
 export const dynamic = "force-dynamic"
 
@@ -104,12 +105,9 @@ export default async function Page({
 
 <ProductManager businessId={biz.id} />
 <CashSummary businessId={biz.id} />
+<AdminStock businessId={biz.id} />
 
-      {/* RESTAURANTE */}
-      <div>
-        <AdminRestaurant businessId={biz.id} />
-      </div>
-
+      
     </div>
 
   )

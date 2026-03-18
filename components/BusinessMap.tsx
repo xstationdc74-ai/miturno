@@ -5,7 +5,6 @@ import { useEffect } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// ✅ FIX REAL (Next compatible)
 import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png"
 import markerIcon from "leaflet/dist/images/marker-icon.png"
 import markerShadow from "leaflet/dist/images/marker-shadow.png"
@@ -19,8 +18,8 @@ L.Icon.Default.mergeOptions({
 type Business = {
   name: string
   slug: string
-  lat: number
-  lng: number
+  lat: number | null
+  lng: number | null
   cover_image?: string
   type?: string
 }
@@ -38,15 +37,16 @@ function LocateUser() {
       (pos) => {
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
-        map.setView([lat, lng], 15)
+
+        if (map) {
+          map.setView([lat, lng], 15)
+        }
       },
 
       () => {
-        map.setView([-40.7612, -71.6463], 15)
-      },
-
-      {
-        enableHighAccuracy: true
+        if (map) {
+          map.setView([-40.7612, -71.6463], 15)
+        }
       }
 
     )
@@ -57,6 +57,10 @@ function LocateUser() {
 }
 
 export default function BusinessMap({ businesses }: { businesses: Business[] }) {
+
+  const validBusinesses = businesses.filter(
+    (b) => b.lat !== null && b.lng !== null
+  )
 
   return (
 
@@ -70,13 +74,11 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
       <LocateUser />
 
-      {businesses
-         .filter(b => b.lat && b.lng)
-         .map((b) => (
+      {validBusinesses.map((b) => (
 
         <Marker
           key={b.slug}
-          position={[b.lat, b.lng]}
+          position={[b.lat as number, b.lng as number]}
         >
 
           <Popup>
@@ -112,7 +114,8 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
               <a
                 href={`/book/${b.slug}`}
-                className="block mt-3 text-center bg-green-600 text-white text-sm py-2 rounded-lg"
+                style={{ color: "#fff", textDecoration: "none" }}
+                className="block mt-3 text-center bg-green-600 text-sm py-2 rounded-lg"
               >
                 Reservar
               </a>

@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
@@ -7,6 +7,7 @@ type Product = {
   id: string
   name: string
   price: number
+  stock: number
 }
 
 type OrderItem = {
@@ -16,12 +17,16 @@ type OrderItem = {
   quantity: number
 }
 
+type PaymentMethod = "cash" | "card" | "wallet"
+
 export default function AdminRestaurant({ businessId }: { businessId: string }) {
 
   const [products,setProducts] = useState<Product[]>([])
   const [orderItems,setOrderItems] = useState<OrderItem[]>([])
   const [table,setTable] = useState("1")
   const [loading,setLoading] = useState(false)
+  const [payment,setPayment] = useState<PaymentMethod>("cash")
+  const [message,setMessage] = useState<string | null>(null)
 
   useEffect(()=>{
     loadProducts()
@@ -37,13 +42,29 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
     setProducts(data || [])
   }
 
+  const showMessage = (msg:string) => {
+    setMessage(msg)
+    setTimeout(()=>setMessage(null),2000)
+  }
+
   const addItem = (product:Product) => {
+
+    if(product.stock === 0){
+      showMessage("Sin stock")
+      return
+    }
 
     setOrderItems(prev => {
 
       const existing = prev.find(p => p.product_id === product.id)
 
       if(existing){
+
+        if(existing.quantity >= product.stock){
+          showMessage("Stock máximo alcanzado")
+          return prev
+        }
+
         return prev.map(p =>
           p.product_id === product.id
             ? { ...p, quantity: p.quantity + 1 }
@@ -75,25 +96,23 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
     setLoading(true)
 
-    // 1. crear order
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error } = await supabase
       .from("orders")
       .insert({
         business_id: businessId,
-        table_number: table
+        table_number: table,
+        payment_method: payment
       })
       .select()
       .single()
 
-    // 🔥 DEFENSA (clave)
-    if(orderError || !order){
-      console.error("ORDER ERROR", orderError)
+    if (error || !order) {
+      console.error("ORDER ERROR", error)
       setLoading(false)
-      alert("Error creando la orden")
+      showMessage("Error al crear la orden")
       return
     }
 
-    // 2. items
     const items = orderItems.map(i => ({
       order_id: order.id,
       product_id: i.product_id,
@@ -101,41 +120,55 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       price: i.price
     }))
 
-    const { error: itemsError } = await supabase
-      .from("order_items")
-      .insert(items)
+    await supabase.from("order_items").insert(items)
 
-    if(itemsError){
-      console.error("ITEMS ERROR", itemsError)
+    await supabase.from("sales").insert({
+      business_id: businessId,
+      amount: total,
+      payment_method: payment
+    })
+
+    // 🔥 DESCONTAR STOCK
+    for (const item of orderItems) {
+
+      const { data: product } = await supabase
+        .from("products")
+        .select("stock")
+        .eq("id", item.product_id)
+        .single()
+
+      if (!product) continue
+
+      const newStock = Math.max(product.stock - item.quantity, 0)
+
+      await supabase
+        .from("products")
+        .update({ stock: newStock })
+        .eq("id", item.product_id)
     }
 
-    // 3. venta
-    const { error: salesError } = await supabase
-      .from("sales")
-      .insert({
-        business_id: businessId,
-        amount: total
-      })
-
-    if(salesError){
-      console.error("SALES ERROR", salesError)
-    }
+    await loadProducts()
 
     setOrderItems([])
     setLoading(false)
 
-    alert("Cuenta cerrada")
+    showMessage("Cuenta cerrada ✅")
   }
 
   return(
 
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
+      {message && (
+        <div className="bg-black text-white text-sm px-4 py-2 rounded-lg">
+          {message}
+        </div>
+      )}
+
       <h2 className="text-xl font-semibold">
         Restaurante — Comandas
       </h2>
 
-      {/* MESA */}
       <input
         value={table}
         onChange={e=>setTable(e.target.value)}
@@ -144,17 +177,44 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       />
 
       {/* PRODUCTOS */}
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
 
-        {products.map(p=>(
-          <button
-            key={p.id}
-            onClick={()=>addItem(p)}
-            className="bg-gray-100 p-3 rounded-lg text-sm"
-          >
-            {p.name} — ${p.price}
-          </button>
-        ))}
+        {[...products]
+          .sort((a,b)=> b.stock - a.stock)
+          .map(p=>{
+
+            const outOfStock = p.stock === 0
+
+            return (
+              <button
+                key={p.id}
+                onClick={()=>addItem(p)}
+                disabled={outOfStock}
+                className={`p-3 rounded-lg text-sm text-left ${
+                  outOfStock
+                    ? "bg-red-100 opacity-60"
+                    : "bg-gray-100"
+                }`}
+              >
+                <div className="font-medium">
+                  {p.name}
+                </div>
+
+                <div className="text-xs text-gray-500">
+                  ${p.price}
+                </div>
+
+                <div className={`text-xs mt-1 ${
+                  outOfStock
+                    ? "text-red-600"
+                    : "text-green-600"
+                }`}>
+                  {outOfStock ? "🔴 Sin stock" : `🟢 ${p.stock} disponibles`}
+                </div>
+
+              </button>
+            )
+        })}
 
       </div>
 
@@ -185,7 +245,52 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
       </div>
 
-      {/* CTA */}
+      {/* MÉTODO DE PAGO */}
+      <div className="space-y-2">
+
+        <div className="text-sm font-semibold">
+          Método de pago
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+
+          <button
+            onClick={()=>setPayment("cash")}
+            className={`p-3 rounded-lg text-sm ${
+              payment === "cash"
+                ? "bg-black text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            Efectivo
+          </button>
+
+          <button
+            onClick={()=>setPayment("card")}
+            className={`p-3 rounded-lg text-sm ${
+              payment === "card"
+                ? "bg-black text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            Tarjeta
+          </button>
+
+          <button
+            onClick={()=>setPayment("wallet")}
+            className={`p-3 rounded-lg text-sm ${
+              payment === "wallet"
+                ? "bg-black text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            Wallet
+          </button>
+
+        </div>
+
+      </div>
+
       <button
         onClick={handleCloseOrder}
         disabled={loading}
