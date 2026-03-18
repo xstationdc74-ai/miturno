@@ -1,7 +1,17 @@
 "use client"
 
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import L from "leaflet"
 import "leaflet/dist/leaflet.css"
+
+// 🔥 FIX ICONOS LEAFLET (CLAVE)
+delete (L.Icon.Default.prototype as any)._getIconUrl
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+})
 
 type Business = {
   id: string
@@ -11,7 +21,7 @@ type Business = {
   lng: number
 }
 
-export default function Map({ business }: { business: Business[] }) {
+export default function Page({ business }: { business: Business[] }) {
 
   return (
     <MapContainer
@@ -20,7 +30,7 @@ export default function Map({ business }: { business: Business[] }) {
       style={{ height: "100vh", width: "100%" }}
     >
       <TileLayer
-        attribution='&copy; OpenStreetMap'
+        attribution="&copy; OpenStreetMap"
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
 
@@ -31,7 +41,7 @@ export default function Map({ business }: { business: Business[] }) {
         return (
           <Marker
             key={b.id}
-            position={[b.lat, b.lng]}
+            position={[Number(b.lat), Number(b.lng)]}
           >
             <Popup>
               <div className="text-sm space-y-1">
