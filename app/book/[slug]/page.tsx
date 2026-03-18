@@ -1,54 +1,51 @@
-'use client'
-
-import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import BusinessHero from "@/components/BusinessHero"
-import CalendarBooking from "@/components/CalendarBooking"
-import Gallery from "@/components/Gallery"
-import { useParams } from "next/navigation"
 
-export default function Page() {
+export const dynamic = "force-dynamic"
 
-  const params = useParams()
-  const slug = params.slug as string
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }>
+}) {
 
-  const [biz,setBiz] = useState<any>(null)
+  const { slug } = await params
 
-  useEffect(()=>{
-    load()
-  },[slug])
+  const { data: biz } = await supabase
+    .from("business")
+    .select("*")
+    .eq("slug", slug)
+    .single()
 
-  const load = async () => {
-
-    const { data } = await supabase
-      .from("business")
-      .select("*")
-      .eq("slug", slug)
-      .single()
-
-    setBiz(data)
+  if (!biz) {
+    return <div className="p-10">Negocio no encontrado</div>
   }
 
-  if(!biz){
-    return <div className="p-10">Cargando...</div>
-  }
+  const { data: hours } = await supabase
+    .from("business_hours")
+    .select("*")
+    .eq("business_id", biz.id)
 
   return (
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
 
-    <div className="max-w-5xl mx-auto">
+      <div>
+        <h1 className="text-2xl font-semibold">
+          {biz.name}
+        </h1>
 
-      <BusinessHero business={biz} />
+        <div className="text-sm text-gray-500 space-y-1 mt-2">
 
-      <div className="p-6">
-        <Gallery businessId={biz.id} />
+          {hours?.map(h => (
+            <div key={h.day_of_week}>
+              Día {h.day_of_week}: {h.open_time} - {h.close_time}
+            </div>
+          ))}
+
+        </div>
       </div>
 
-      <div className="p-6">
-        <CalendarBooking businessId={biz.id} />
-      </div>
-
+      {/* ACÁ VA TODO LO QUE YA TENÍAS */}
+      
     </div>
-
   )
-
 }

@@ -1,55 +1,54 @@
 "use client"
 
-import dynamic from "next/dynamic"
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase/client"
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet"
+import "leaflet/dist/leaflet.css"
 
 type Business = {
+  id: string
   name: string
   slug: string
   lat: number
   lng: number
 }
 
-const BusinessMap = dynamic(
-  () => import("@/components/BusinessMap"),
-  { ssr: false }
-)
-
-export default function Page() {
-
-  const [businesses, setBusinesses] = useState<Business[]>([])
-
-  useEffect(() => {
-
-    const load = async () => {
-
-      const { data } = await supabase
-        .from("business")
-        .select("name,slug,lat,lng")
-        .not("lat","is",null)
-        .not("lng","is",null)
-
-      setBusinesses((data as Business[]) || [])
-
-    }
-
-    load()
-
-  }, [])
+export default function Map({ business }: { business: Business[] }) {
 
   return (
+    <MapContainer
+      center={[-34.6037, -58.3816]}
+      zoom={13}
+      style={{ height: "100vh", width: "100%" }}
+    >
+      <TileLayer
+        attribution='&copy; OpenStreetMap'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
 
-    <div className="max-w-4xl mx-auto mt-10 space-y-6">
+      {business.map(b => {
 
-      <h1 className="text-2xl font-semibold text-center">
-        Negocios cerca tuyo
-      </h1>
+        if (!b.lat || !b.lng) return null
 
-      <BusinessMap businesses={businesses} />
+        return (
+          <Marker
+            key={b.id}
+            position={[b.lat, b.lng]}
+          >
+            <Popup>
+              <div className="text-sm space-y-1">
+                <div className="font-semibold">{b.name}</div>
 
-    </div>
+                <a
+                  href={`/book/${b.slug}`}
+                  className="text-blue-600 underline"
+                >
+                  Reservar
+                </a>
+              </div>
+            </Popup>
+          </Marker>
+        )
+      })}
 
+    </MapContainer>
   )
-
 }
