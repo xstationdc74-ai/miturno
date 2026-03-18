@@ -11,7 +11,13 @@ export default function BusinessQR({ slug }: Props) {
 
   const qrRef = useRef<HTMLDivElement>(null)
 
-  const url = `http://localhost:3000/book/${slug}`
+  // 🔥 URL DINÁMICA (FUNCIONA LOCAL + VERCEL)
+  const baseUrl =
+    typeof window !== "undefined"
+      ? window.location.origin
+      : "https://miturno.vercel.app"
+
+  const url = `${baseUrl}/book/${slug}`
 
   const downloadQR = () => {
 
