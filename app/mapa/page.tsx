@@ -1,54 +1,129 @@
 "use client"
 
-import dynamic from "next/dynamic"
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase/client"
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet"
+import { useEffect } from "react"
+import L from "leaflet"
+import "leaflet/dist/leaflet.css"
+
+// ✅ FIX ICONOS PRODUCCIÓN
+import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png"
+import markerIcon from "leaflet/dist/images/marker-icon.png"
+import markerShadow from "leaflet/dist/images/marker-shadow.png"
+
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: markerIcon2x.src,
+  iconUrl: markerIcon.src,
+  shadowUrl: markerShadow.src,
+})
 
 type Business = {
   name: string
   slug: string
   lat: number
   lng: number
+  cover_image?: string
+  type?: string
 }
 
-const BusinessMap = dynamic(
-  () => import("@/components/BusinessMap"),
-  { ssr: false }
-)
+function LocateUser() {
 
-export default function Page() {
-
-  const [businesses, setBusinesses] = useState<Business[]>([])
+  const map = useMap()
 
   useEffect(() => {
 
-    const load = async () => {
+    if (!navigator.geolocation) return
 
-      const { data } = await supabase
-        .from("business")
-        .select("name,slug,lat,lng")
-        .not("lat","is",null)
-        .not("lng","is",null)
+    navigator.geolocation.getCurrentPosition(
 
-      setBusinesses((data as Business[]) || [])
+      (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        map.setView([lat, lng], 15)
+      },
 
-    }
+      () => {
+        map.setView([-40.7612, -71.6463], 15)
+      },
 
-    load()
+      {
+        enableHighAccuracy: true
+      }
 
-  }, [])
+    )
+
+  }, [map])
+
+  return null
+}
+
+export default function BusinessMap({ businesses }: { businesses: Business[] }) {
 
   return (
 
-    <div className="max-w-4xl mx-auto mt-10 space-y-6">
+    <MapContainer
+      center={[-40.7612, -71.6463]}
+      zoom={15}
+      style={{ height: "70vh", width: "100%" }}
+    >
 
-      <h1 className="text-2xl font-semibold text-center">
-        Negocios cerca tuyo
-      </h1>
+      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
-      <BusinessMap businesses={businesses} />
+      <LocateUser />
 
-    </div>
+      {businesses.map((b) => (
+
+        <Marker
+          key={b.slug}
+          position={[b.lat, b.lng]}
+        >
+
+          <Popup>
+
+            <div className="w-[220px]">
+
+              <div className="w-full h-28 bg-gray-200 rounded-lg overflow-hidden mb-2">
+                {b.cover_image ? (
+                  <img
+                    src={b.cover_image}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                    Sin imagen
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-1">
+
+                <div className="text-sm font-semibold">
+                  {b.name}
+                </div>
+
+                {b.type && (
+                  <div className="text-xs text-gray-500">
+                    {b.type}
+                  </div>
+                )}
+
+              </div>
+
+              <a
+                href={`/book/${b.slug}`}
+                className="block mt-3 text-center bg-green-600 text-white text-sm py-2 rounded-lg no-underline hover:bg-green-700"
+              >
+                Reservar
+              </a>
+
+            </div>
+
+          </Popup>
+
+        </Marker>
+
+      ))}
+
+    </MapContainer>
 
   )
 
