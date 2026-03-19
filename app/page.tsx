@@ -1,8 +1,8 @@
 import { supabase } from "@/lib/supabase/client"
-import dynamic from "next/dynamic"
+import dynamicImport from "next/dynamic"
 import Link from "next/link"
 
-const BusinessMapClient = dynamic(
+const BusinessMapClient = dynamicImport(
   () => import("@/components/BusinessMapClient"),
   { ssr: false }
 )
