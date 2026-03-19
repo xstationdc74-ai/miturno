@@ -1,36 +1,25 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
-import dynamic from "next/dynamic";
-import Link from "next/link";
+import { supabase } from "@/lib/supabase/client"
+import dynamic from "next/dynamic"
+import Link from "next/link"
 
 const BusinessMapClient = dynamic(
   () => import("@/components/BusinessMapClient"),
   { ssr: false }
-);
+)
 
-export default function Page() {
+export const dynamic = "force-dynamic"
 
-  const [businesses, setBusinesses] = useState<any[]>([]);
+export default async function Page() {
 
-  useEffect(() => {
-    loadBusinesses();
-  }, []);
+  const { data } = await supabase
+    .from("business")
+    .select("*")
 
-  const loadBusinesses = async () => {
-    const { data } = await supabase
-      .from("business")
-      .select("*");
-
-    setBusinesses(data || []);
-  };
+  const businesses = data || []
 
   return (
 
     <div className="flex flex-col">
-
-      {/* HERO COMPACTO */}
 
       <section className="text-center py-8 px-6">
 
@@ -55,8 +44,6 @@ export default function Page() {
 
       </section>
 
-      {/* MAPA PROTAGONISTA */}
-
       <section className="h-[75vh]">
 
         <BusinessMapClient businesses={businesses} />
@@ -65,5 +52,5 @@ export default function Page() {
 
     </div>
 
-  );
+  )
 }
