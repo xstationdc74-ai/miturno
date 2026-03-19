@@ -1,21 +1,33 @@
-import { supabase } from "@/lib/supabase/client"
-import dynamicImport from "next/dynamic"
-import Link from "next/link"
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
+import dynamicImport from "next/dynamic";
+import Link from "next/link";
 
 const BusinessMapClient = dynamicImport(
   () => import("@/components/BusinessMapClient"),
   { ssr: false }
-)
+);
 
-export const dynamic = "force-dynamic"
+export default function Page() {
 
-export default async function Page() {
+  const [businesses, setBusinesses] = useState<any[]>([]);
 
-  const { data } = await supabase
-    .from("business")
-    .select("*")
+  useEffect(() => {
+    loadBusinesses();
+  }, []);
 
-  const businesses = data || []
+  const loadBusinesses = async () => {
+
+    const { data, error } = await supabase
+      .from("business")
+      .select("*");
+
+    console.log("DATA:", data, error); // 🔥 DEBUG
+
+    setBusinesses(data || []);
+  };
 
   return (
 
@@ -52,5 +64,5 @@ export default async function Page() {
 
     </div>
 
-  )
+  );
 }
