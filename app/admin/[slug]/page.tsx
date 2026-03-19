@@ -1,115 +1,165 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import AdminAgenda from "@/components/AdminAgenda"
-import BusinessBannerUpload from "@/components/BusinessBannerUpload"
-import BusinessQR from "@/components/BusinessQR"
-import BusinessSettings from "@/components/BusinessSettings"
-import GallerySection from "@/components/GallerySection"
-import AdminRestaurant from "@/components/AdminRestaurant"
-import ProductManager from "@/components/ProductManager"
 import CashSummary from "@/components/CashSummary"
-import AdminStock from "@/components/AdminStock"
+import Link from "next/link"
 
-export const dynamic = "force-dynamic"
+type Appointment = {
+  id: string
+  client_name: string
+  client_phone: string
+  status: string
+}
 
-export default async function Page({
+type Business = {
+  id: string
+  name: string
+  slug: string
+}
+
+export default function Page({
   params,
 }: {
   params: Promise<{ slug: string }>
 }) {
 
-  const { slug } = await params
+  const [slug,setSlug] = useState<string | null>(null)
+  const [biz,setBiz] = useState<Business | null>(null)
+  const [appointments,setAppointments] = useState<Appointment[]>([])
 
-  const { data: biz } = await supabase
-    .from("business")
-    .select("*")
-    .eq("slug", slug)
-    .single()
+  useEffect(()=>{
+    const loadParams = async () => {
+      const p = await params
+      setSlug(p.slug)
+    }
+    loadParams()
+  },[params])
 
-  if (!biz) {
-    return <div className="p-10">Negocio no encontrado</div>
+  useEffect(()=>{
+    if(!slug) return
+    loadData()
+  },[slug])
+
+  const loadData = async () => {
+
+    const { data: bizData } = await supabase
+      .from("business")
+      .select("*")
+      .eq("slug", slug)
+      .single()
+
+    if(!bizData) return
+
+    setBiz(bizData)
+
+    const { data: appData } = await supabase
+      .from("appointments")
+      .select("*")
+      .eq("business_id", bizData.id)
+      .order("created_at", { ascending: false })
+
+    setAppointments(appData || [])
   }
 
+  const updateStatus = async (id:string, status:string) => {
+
+    await supabase
+      .from("appointments")
+      .update({ status })
+      .eq("id", id)
+
+    setAppointments(prev =>
+      prev.map(a =>
+        a.id === id ? { ...a, status } : a
+      )
+    )
+  }
+
+  if (!biz) return <div className="p-10">Cargando...</div>
+
   return (
+    <div className="max-w-3xl mx-auto p-6 space-y-6">
 
-    <div className="max-w-5xl mx-auto p-6 space-y-8">
+      <h1 className="text-2xl font-semibold">
+        {biz.name}
+      </h1>
 
-      {/* HEADER */}
-      <div>
+      {/* 🔥 BOTONES LARGOS */}
+      <div className="space-y-2">
 
-        <h1 className="text-2xl font-semibold">
-          Panel — {biz.name}
-        </h1>
+        <Link
+          href={`/resto/${biz.slug}/stock`}
+          className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
+        >
+          Gestionar stock
+        </Link>
 
-        <p className="text-sm text-gray-500">
-          Gestioná tu negocio
-        </p>
+        <Link
+          href={`/resto/${biz.slug}`}
+          className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
+        >
+          Ver comandas
+        </Link>
 
       </div>
 
-      {/* GRID */}
-      <div className="grid md:grid-cols-2 gap-6">
+      {/* RESERVAS */}
+      <div className="bg-white p-4 rounded-xl border space-y-3">
 
-        {/* IZQUIERDA */}
-        <div className="space-y-6">
+        <h2 className="text-sm font-semibold">
+          Reservas
+        </h2>
 
-          {/* CONFIG */}
-          <div className="bg-white p-4 rounded-xl border">
-            <h2 className="text-sm font-semibold mb-3">
-              Configuración
-            </h2>
-            <BusinessSettings business={biz} />
+        {appointments.length === 0 && (
+          <div className="text-xs text-gray-400">
+            Sin reservas
           </div>
+        )}
 
-          {/* BANNER */}
-          <div className="bg-white p-4 rounded-xl border">
-            <h2 className="text-sm font-semibold mb-3">
-              Banner
-            </h2>
-            <BusinessBannerUpload businessId={biz.id} />
-          </div>
+        {appointments.map(a => (
+          <div
+            key={a.id}
+            className="border rounded-lg p-3 space-y-2 text-sm"
+          >
 
-          {/* GALERÍA */}
-          <GallerySection businessId={biz.id} />
-
-        </div>
-
-        {/* DERECHA */}
-        <div className="space-y-6">
-
-          {/* QR */}
-          <div className="bg-white p-4 rounded-xl border text-center">
-
-            <h2 className="text-sm font-semibold mb-3">
-              QR de reservas
-            </h2>
-
-            <div className="flex justify-center">
-              <BusinessQR slug={biz.slug} />
+            <div className="font-medium">
+              {a.client_name}
             </div>
 
-            <p className="text-xs text-gray-500 mt-2">
-              Escaneá para reservar turno
-            </p>
+            <div className="text-xs text-gray-500">
+              {a.client_phone}
+            </div>
+
+            <div className="text-xs">
+              Estado: {a.status}
+            </div>
+
+            <div className="flex gap-2">
+
+              <button
+                onClick={()=>updateStatus(a.id,"accepted")}
+                className="px-3 py-1 text-xs bg-green-600 text-white rounded"
+              >
+                Aceptar
+              </button>
+
+              <button
+                onClick={()=>updateStatus(a.id,"rejected")}
+                className="px-3 py-1 text-xs bg-red-600 text-white rounded"
+              >
+                Rechazar
+              </button>
+
+            </div>
 
           </div>
-
-        </div>
+        ))}
 
       </div>
 
-      {/* AGENDA */}
-      <div>
-        <AdminAgenda businessId={biz.id} />
-      </div>
+      <CashSummary businessId={biz.id} />
 
-
-<ProductManager businessId={biz.id} />
-<CashSummary businessId={biz.id} />
-<AdminStock businessId={biz.id} />
-
-      
     </div>
-
   )
-
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
+import Link from "next/link"
 
 type Product = {
   id: string
@@ -27,10 +28,22 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
   const [loading,setLoading] = useState(false)
   const [payment,setPayment] = useState<PaymentMethod>("cash")
   const [message,setMessage] = useState<string | null>(null)
+  const [slug,setSlug] = useState<string | null>(null)
 
   useEffect(()=>{
     loadProducts()
+    loadBusiness()
   },[])
+
+  const loadBusiness = async () => {
+    const { data } = await supabase
+      .from("business")
+      .select("slug")
+      .eq("id", businessId)
+      .single()
+
+    if(data) setSlug(data.slug)
+  }
 
   const loadProducts = async () => {
 
@@ -96,7 +109,21 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
     setLoading(true)
 
-    const { data: order, error } = await supabase
+    let messageText = `🧾 Pedido Mesa ${table}\n\n`
+
+    orderItems.forEach(i => {
+      messageText += `• ${i.name} x${i.quantity} - $${i.price * i.quantity}\n`
+    })
+
+    messageText += `\nTotal: $${total}`
+
+    const phone = "549XXXXXXXXXX"
+
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(messageText)}`
+
+    window.open(whatsappUrl, "_blank")
+
+    const { data: order } = await supabase
       .from("orders")
       .insert({
         business_id: businessId,
@@ -105,13 +132,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       })
       .select()
       .single()
-
-    if (error || !order) {
-      console.error("ORDER ERROR", error)
-      setLoading(false)
-      showMessage("Error al crear la orden")
-      return
-    }
 
     const items = orderItems.map(i => ({
       order_id: order.id,
@@ -128,7 +148,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       payment_method: payment
     })
 
-    // 🔥 DESCONTAR STOCK
     for (const item of orderItems) {
 
       const { data: product } = await supabase
@@ -152,12 +171,22 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
     setOrderItems([])
     setLoading(false)
 
-    showMessage("Cuenta cerrada ✅")
+    showMessage("Pedido enviado 🚀")
   }
 
   return(
 
     <div className="max-w-3xl mx-auto p-6 space-y-6">
+
+      {/* 🔥 BOTÓN STOCK */}
+      {slug && (
+        <Link
+          href={`/resto/${slug}/stock`}
+          className="block text-center bg-green-600 text-white py-2 rounded-lg text-sm"
+        >
+          Gestionar stock
+        </Link>
+      )}
 
       {message && (
         <div className="bg-black text-white text-sm px-4 py-2 rounded-lg">
@@ -176,7 +205,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         placeholder="Mesa"
       />
 
-      {/* PRODUCTOS */}
       <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
 
         {[...products]
@@ -218,7 +246,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
       </div>
 
-      {/* PEDIDO */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h3 className="text-sm font-semibold">
@@ -245,7 +272,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
       </div>
 
-      {/* MÉTODO DE PAGO */}
       <div className="space-y-2">
 
         <div className="text-sm font-semibold">

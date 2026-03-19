@@ -22,6 +22,7 @@ type Business = {
   lng: number | null
   cover_image?: string
   type?: string
+  description?: string
 }
 
 function LocateUser() {
@@ -35,18 +36,11 @@ function LocateUser() {
     navigator.geolocation.getCurrentPosition(
 
       (pos) => {
-        const lat = pos.coords.latitude
-        const lng = pos.coords.longitude
-
-        if (map) {
-          map.setView([lat, lng], 15)
-        }
+        map.setView([pos.coords.latitude, pos.coords.longitude], 15)
       },
 
       () => {
-        if (map) {
-          map.setView([-40.7612, -71.6463], 15)
-        }
+        map.setView([-40.7612, -71.6463], 15)
       }
 
     )
@@ -85,17 +79,20 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
             <div className="w-[220px]">
 
-              <div className="w-full h-28 bg-gray-200 rounded-lg overflow-hidden mb-2">
+              {/* 🔥 IMAGEN FIX */}
+              <div className="w-full h-28 bg-white rounded-lg overflow-hidden mb-2 flex items-center justify-center">
+
                 {b.cover_image ? (
                   <img
                     src={b.cover_image}
-                    className="w-full h-full object-cover"
+                    className="max-h-full max-w-full object-contain"
                   />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+                  <div className="text-xs text-gray-400">
                     Sin imagen
                   </div>
                 )}
+
               </div>
 
               <div className="space-y-1">
@@ -110,12 +107,18 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
                   </div>
                 )}
 
+                {b.description && (
+                  <div className="text-xs text-gray-500">
+                    {b.description}
+                  </div>
+                )}
+
               </div>
 
               <a
                 href={`/book/${b.slug}`}
                 style={{ color: "#fff", textDecoration: "none" }}
-                className="block mt-3 text-center bg-green-600 text-sm py-2 rounded-lg"
+                className="block mt-3 text-center bg-green-600 text-white text-sm py-2 rounded-lg"
               >
                 Reservar
               </a>
