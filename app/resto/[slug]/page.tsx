@@ -40,7 +40,10 @@ export default async function Page({
 
         <CashSummary businessId={biz.id} />
 
-        <AdminRestaurant businessId={biz.id} />
+        <AdminRestaurant
+         businessId={biz.id}
+         slug={biz.slug}
+         />
 
       </div>
 
