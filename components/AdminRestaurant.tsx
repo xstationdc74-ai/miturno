@@ -140,9 +140,27 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
     for (const i of currentItems) {
       await supabase
         .from("products")
-        .update({ stock: (products.find(p=>p.id===i.product_id)?.stock || 0) - i.quantity })
+        .update({
+          stock: (products.find(p=>p.id===i.product_id)?.stock || 0) - i.quantity
+        })
         .eq("id", i.product_id)
     }
+
+    // 🔥 WHATSAPP
+    const message = `
+Nueva comanda 🍽
+Mesa: ${table}
+Pago: ${payment}
+
+${currentItems.map(i => `${i.name} x${i.quantity}`).join("\n")}
+
+Total: $${total}
+    `
+
+    const phone = "5492944157070"
+
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
+    window.open(url, "_blank")
 
     setCurrentItems([])
     setLoading(false)
@@ -162,7 +180,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         Gestionar stock
       </Link>
 
-      {/* PRODUCTOS */}
       <div className="grid grid-cols-2 gap-2">
 
         {products.map(p=>(
@@ -180,7 +197,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
 
       </div>
 
-      {/* PEDIDO ACTUAL */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h3 className="text-sm font-semibold">
@@ -209,7 +225,7 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         Cerrar cuenta
       </button>
 
-      {/* 🔥 HISTORIAL */}
+      {/* HISTORIAL */}
       <div className="bg-white p-4 rounded-xl border space-y-3">
 
         <h3 className="text-sm font-semibold">
