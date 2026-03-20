@@ -1,25 +1,42 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import AdminRestaurant from "@/components/AdminRestaurant"
 import CashSummary from "@/components/CashSummary"
+import { useParams } from "next/navigation"
 
-export const dynamic = "force-dynamic"
+type Business = {
+  id: string
+  name: string
+  slug: string
+}
 
-export default async function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default function Page() {
 
-  const { slug } = await params
+  const params = useParams()
+  const slug = typeof params.slug === "string" ? params.slug : undefined
 
-  const { data: biz } = await supabase
-    .from("business")
-    .select("*")
-    .eq("slug", slug)
-    .single()
+  const [biz,setBiz] = useState<Business | null>(null)
+
+  useEffect(()=>{
+    if(!slug) return
+    loadBiz()
+  },[slug])
+
+  const loadBiz = async () => {
+
+    const { data } = await supabase
+      .from("business")
+      .select("*")
+      .eq("slug", slug)
+      .single()
+
+    setBiz(data)
+  }
 
   if (!biz) {
-    return <div className="p-10">Negocio no encontrado</div>
+    return <div className="p-10">Cargando...</div>
   }
 
   return (
@@ -41,9 +58,9 @@ export default async function Page({
         <CashSummary businessId={biz.id} />
 
         <AdminRestaurant
-         businessId={biz.id}
-         slug={biz.slug}
-         />
+          businessId={biz.id}
+          slug={biz.slug}
+        />
 
       </div>
 
