@@ -149,6 +149,7 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         .eq("id", i.product_id)
     }
 
+    // 🔥 WHATSAPP
     const message = `
 Nueva comanda 🍽
 Mesa: ${table}
@@ -183,14 +184,14 @@ Total: $${total}
         Gestionar stock
       </Link>
 
-      {/* 🔥 CATEGORÍAS */}
-      <div className="grid grid-cols-3 gap-2">
+      {/* 🔥 CATEGORÍAS SCROLL */}
+      <div className="flex gap-2 overflow-x-auto pb-2">
 
         {["bebidas","platos","postres"].map(c => (
           <button
             key={c}
             onClick={()=>setCategory(c)}
-            className={`p-2 rounded-lg text-sm ${
+            className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${
               category === c
                 ? "bg-green-600 text-white"
                 : "bg-gray-100"
