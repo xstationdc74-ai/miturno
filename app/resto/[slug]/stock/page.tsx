@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 
 type Product = {
   id: string
@@ -17,27 +18,17 @@ type Business = {
   slug: string
 }
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+export default function Page() {
 
-  const [slug,setSlug] = useState<string | null>(null)
+  const params = useParams()
+  const slug = params.slug as string
+
   const [biz,setBiz] = useState<Business | null>(null)
   const [products,setProducts] = useState<Product[]>([])
 
   const [newName,setNewName] = useState("")
   const [newPrice,setNewPrice] = useState("")
   const [newStock,setNewStock] = useState("")
-
-  useEffect(()=>{
-    const loadParams = async () => {
-      const p = await params
-      setSlug(p.slug)
-    }
-    loadParams()
-  },[params])
 
   useEffect(()=>{
     if(!slug) return
@@ -116,7 +107,6 @@ export default function Page({
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
-      {/* 🔥 BOTONES LARGOS */}
       <div className="space-y-2">
 
         <Link
@@ -138,8 +128,6 @@ export default function Page({
       <h1 className="text-xl font-semibold">
         Stock — {biz.name}
       </h1>
-
-      {/* RESTO IGUAL */}
 
       <div className="bg-white p-4 rounded-xl border space-y-2">
 

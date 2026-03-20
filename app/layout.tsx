@@ -1,5 +1,4 @@
 import "./globals.css"
-import SplashScreen from "@/components/SplashScreen"
 
 export const metadata = {
   title: "Kume",
@@ -15,11 +14,11 @@ export default function RootLayout({
     <html lang="es">
       <head>
 
-        {/* 🔥 PWA */}
+        {/* PWA */}
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#16a34a" />
 
-        {/* 🔥 iPhone */}
+        {/* iPhone */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
@@ -28,35 +27,23 @@ export default function RootLayout({
 
       <body className="min-h-screen flex flex-col bg-gray-50 text-gray-900">
 
-        <SplashScreen />
-
-        {/* HEADER */}
+        {/* 🔥 HEADER */}
         <header className="bg-white border-b">
-
           <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
 
-            <a href="/" className="flex items-center gap-2">
-              <span className="text-green-600 font-bold text-lg">
-                Kume
-              </span>
+            <a href="/" className="text-green-600 font-bold">
+              Kume
             </a>
 
-            <nav className="flex items-center gap-4 text-sm">
-
+            <div className="flex gap-4 text-sm">
               <a href="/explorar">Explorar</a>
               <a href="/sobre">Sobre Kume</a>
-
-              <a
-                href="/admin"
-                className="bg-green-600 text-white px-3 py-1 rounded-lg"
-              >
+              <a href="/admin" className="bg-green-600 text-white px-3 py-1 rounded-lg">
                 Sumar lugar
               </a>
-
-            </nav>
+            </div>
 
           </div>
-
         </header>
 
         {/* CONTENIDO */}

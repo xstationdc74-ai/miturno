@@ -2,8 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import BusinessMap from "@/components/BusinessMap";
+import dynamic from "next/dynamic";
 import Link from "next/link";
+
+const BusinessMapClient = dynamic(
+  () => import("@/components/BusinessMap"),
+  { ssr: false }
+);
 
 export default function Page() {
 
@@ -14,12 +19,9 @@ export default function Page() {
   }, []);
 
   const loadBusinesses = async () => {
-
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from("business")
       .select("*");
-
-    console.log("DATA:", data, error);
 
     setBusinesses(data || []);
   };
@@ -53,7 +55,7 @@ export default function Page() {
 
       <section className="h-[75vh]">
 
-        <BusinessMap businesses={businesses} />
+        <BusinessMapClient businesses={businesses} />
 
       </section>
 
