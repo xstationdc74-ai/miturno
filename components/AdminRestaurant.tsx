@@ -9,6 +9,7 @@ type Product = {
   name: string
   price: number
   stock: number
+  category: string | null
 }
 
 type Order = {
@@ -39,6 +40,8 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
   const [table,setTable] = useState("1")
   const [loading,setLoading] = useState(false)
   const [payment,setPayment] = useState("cash")
+
+  const [category,setCategory] = useState("bebidas")
 
   useEffect(()=>{
     loadProducts()
@@ -146,7 +149,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         .eq("id", i.product_id)
     }
 
-    // 🔥 WHATSAPP
     const message = `
 Nueva comanda 🍽
 Mesa: ${table}
@@ -158,7 +160,6 @@ Total: $${total}
     `
 
     const phone = "5492944157070"
-
     const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
     window.open(url, "_blank")
 
@@ -168,6 +169,8 @@ Total: $${total}
     loadProducts()
     loadOrders()
   }
+
+  const filteredProducts = products.filter(p => p.category === category)
 
   return(
 
@@ -180,9 +183,29 @@ Total: $${total}
         Gestionar stock
       </Link>
 
+      {/* 🔥 CATEGORÍAS */}
+      <div className="grid grid-cols-3 gap-2">
+
+        {["bebidas","platos","postres"].map(c => (
+          <button
+            key={c}
+            onClick={()=>setCategory(c)}
+            className={`p-2 rounded-lg text-sm ${
+              category === c
+                ? "bg-green-600 text-white"
+                : "bg-gray-100"
+            }`}
+          >
+            {c}
+          </button>
+        ))}
+
+      </div>
+
+      {/* PRODUCTOS */}
       <div className="grid grid-cols-2 gap-2">
 
-        {products.map(p=>(
+        {filteredProducts.map(p=>(
           <button
             key={p.id}
             onClick={()=>addItem(p)}
@@ -197,6 +220,7 @@ Total: $${total}
 
       </div>
 
+      {/* PEDIDO */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h3 className="text-sm font-semibold">
