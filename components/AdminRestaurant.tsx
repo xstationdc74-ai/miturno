@@ -30,7 +30,13 @@ type OrderItem = {
   }
 }
 
-export default function AdminRestaurant({ businessId }: { businessId: string }) {
+export default function AdminRestaurant({
+  businessId,
+  slug
+}: {
+  businessId: string
+  slug: string
+}) {
 
   const [products,setProducts] = useState<Product[]>([])
   const [orderItems,setOrderItems] = useState<any[]>([])
@@ -44,9 +50,10 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
   const [category,setCategory] = useState("bebidas")
 
   useEffect(()=>{
+    if(!businessId) return
     loadProducts()
     loadOrders()
-  },[])
+  },[businessId])
 
   const loadProducts = async () => {
 
@@ -149,21 +156,6 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         .eq("id", i.product_id)
     }
 
-    // 🔥 WHATSAPP
-    const message = `
-Nueva comanda 🍽
-Mesa: ${table}
-Pago: ${payment}
-
-${currentItems.map(i => `${i.name} x${i.quantity}`).join("\n")}
-
-Total: $${total}
-    `
-
-    const phone = "5492944157070"
-    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`
-    window.open(url, "_blank")
-
     setCurrentItems([])
     setLoading(false)
 
@@ -177,14 +169,15 @@ Total: $${total}
 
     <div className="space-y-6">
 
-      <Link
-        href={`/resto/${businessId}/stock`}
-        className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
-      >
-        Gestionar stock
-      </Link>
+      {slug && (
+        <Link
+          href={`/resto/${slug}/stock`}
+          className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
+        >
+          Gestionar stock
+        </Link>
+      )}
 
-      {/* 🔥 CATEGORÍAS SCROLL */}
       <div className="flex gap-2 overflow-x-auto pb-2">
 
         {["bebidas","platos","postres"].map(c => (
@@ -203,7 +196,6 @@ Total: $${total}
 
       </div>
 
-      {/* PRODUCTOS */}
       <div className="grid grid-cols-2 gap-2">
 
         {filteredProducts.map(p=>(
@@ -221,7 +213,6 @@ Total: $${total}
 
       </div>
 
-      {/* PEDIDO */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h3 className="text-sm font-semibold">
@@ -250,7 +241,6 @@ Total: $${total}
         Cerrar cuenta
       </button>
 
-      {/* HISTORIAL */}
       <div className="bg-white p-4 rounded-xl border space-y-3">
 
         <h3 className="text-sm font-semibold">
