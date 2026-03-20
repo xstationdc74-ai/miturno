@@ -11,39 +11,39 @@ type Product = {
   stock: number
 }
 
-type OrderItem = {
-  product_id: string
-  name: string
-  price: number
-  quantity: number
+type Order = {
+  id: string
+  table_number: string
+  payment_method: string
+  created_at: string
 }
 
-type PaymentMethod = "cash" | "card" | "wallet"
+type OrderItem = {
+  id: string
+  order_id: string
+  product_id: string
+  quantity: number
+  price: number
+  products: {
+    name: string
+  }
+}
 
 export default function AdminRestaurant({ businessId }: { businessId: string }) {
 
   const [products,setProducts] = useState<Product[]>([])
-  const [orderItems,setOrderItems] = useState<OrderItem[]>([])
+  const [orderItems,setOrderItems] = useState<any[]>([])
+  const [orders,setOrders] = useState<Order[]>([])
+
+  const [currentItems,setCurrentItems] = useState<any[]>([])
   const [table,setTable] = useState("1")
   const [loading,setLoading] = useState(false)
-  const [payment,setPayment] = useState<PaymentMethod>("cash")
-  const [message,setMessage] = useState<string | null>(null)
-  const [slug,setSlug] = useState<string | null>(null)
+  const [payment,setPayment] = useState("cash")
 
   useEffect(()=>{
     loadProducts()
-    loadBusiness()
+    loadOrders()
   },[])
-
-  const loadBusiness = async () => {
-    const { data } = await supabase
-      .from("business")
-      .select("slug")
-      .eq("id", businessId)
-      .single()
-
-    if(data) setSlug(data.slug)
-  }
 
   const loadProducts = async () => {
 
@@ -55,29 +55,32 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
     setProducts(data || [])
   }
 
-  const showMessage = (msg:string) => {
-    setMessage(msg)
-    setTimeout(()=>setMessage(null),2000)
+  const loadOrders = async () => {
+
+    const { data } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("business_id", businessId)
+      .order("created_at",{ ascending:false })
+
+    setOrders(data || [])
+
+    const { data: items } = await supabase
+      .from("order_items")
+      .select("*, products(name)")
+    
+    setOrderItems(items || [])
   }
 
   const addItem = (product:Product) => {
 
-    if(product.stock === 0){
-      showMessage("Sin stock")
-      return
-    }
+    if(product.stock === 0) return
 
-    setOrderItems(prev => {
+    setCurrentItems(prev => {
 
       const existing = prev.find(p => p.product_id === product.id)
 
       if(existing){
-
-        if(existing.quantity >= product.stock){
-          showMessage("Stock máximo alcanzado")
-          return prev
-        }
-
         return prev.map(p =>
           p.product_id === product.id
             ? { ...p, quantity: p.quantity + 1 }
@@ -98,30 +101,16 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
     })
   }
 
-  const total = orderItems.reduce(
+  const total = currentItems.reduce(
     (acc,item)=> acc + item.price * item.quantity,
     0
   )
 
   const handleCloseOrder = async () => {
 
-    if(orderItems.length === 0) return
+    if(currentItems.length === 0) return
 
     setLoading(true)
-
-    let messageText = `🧾 Pedido Mesa ${table}\n\n`
-
-    orderItems.forEach(i => {
-      messageText += `• ${i.name} x${i.quantity} - $${i.price * i.quantity}\n`
-    })
-
-    messageText += `\nTotal: $${total}`
-
-    const phone = "549XXXXXXXXXX"
-
-    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(messageText)}`
-
-    window.open(whatsappUrl, "_blank")
 
     const { data: order } = await supabase
       .from("orders")
@@ -133,7 +122,7 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       .select()
       .single()
 
-    const items = orderItems.map(i => ({
+    const items = currentItems.map(i => ({
       order_id: order.id,
       product_id: i.product_id,
       quantity: i.quantity,
@@ -148,171 +137,66 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
       payment_method: payment
     })
 
-    for (const item of orderItems) {
-
-      const { data: product } = await supabase
-        .from("products")
-        .select("stock")
-        .eq("id", item.product_id)
-        .single()
-
-      if (!product) continue
-
-      const newStock = Math.max(product.stock - item.quantity, 0)
-
+    for (const i of currentItems) {
       await supabase
         .from("products")
-        .update({ stock: newStock })
-        .eq("id", item.product_id)
+        .update({ stock: (products.find(p=>p.id===i.product_id)?.stock || 0) - i.quantity })
+        .eq("id", i.product_id)
     }
 
-    await loadProducts()
-
-    setOrderItems([])
+    setCurrentItems([])
     setLoading(false)
 
-    showMessage("Pedido enviado 🚀")
+    loadProducts()
+    loadOrders()
   }
 
   return(
 
-    <div className="max-w-3xl mx-auto p-6 space-y-6">
+    <div className="space-y-6">
 
-      {/* 🔥 BOTÓN STOCK */}
-      {slug && (
-        <Link
-          href={`/resto/${slug}/stock`}
-          className="block text-center bg-green-600 text-white py-2 rounded-lg text-sm"
-        >
-          Gestionar stock
-        </Link>
-      )}
+      <Link
+        href={`/resto/${businessId}/stock`}
+        className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
+      >
+        Gestionar stock
+      </Link>
 
-      {message && (
-        <div className="bg-black text-white text-sm px-4 py-2 rounded-lg">
-          {message}
-        </div>
-      )}
+      {/* PRODUCTOS */}
+      <div className="grid grid-cols-2 gap-2">
 
-      <h2 className="text-xl font-semibold">
-        Restaurante — Comandas
-      </h2>
-
-      <input
-        value={table}
-        onChange={e=>setTable(e.target.value)}
-        className="border px-3 py-2 rounded-lg text-sm"
-        placeholder="Mesa"
-      />
-
-      <div className="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">
-
-        {[...products]
-          .sort((a,b)=> b.stock - a.stock)
-          .map(p=>{
-
-            const outOfStock = p.stock === 0
-
-            return (
-              <button
-                key={p.id}
-                onClick={()=>addItem(p)}
-                disabled={outOfStock}
-                className={`p-3 rounded-lg text-sm text-left ${
-                  outOfStock
-                    ? "bg-red-100 opacity-60"
-                    : "bg-gray-100"
-                }`}
-              >
-                <div className="font-medium">
-                  {p.name}
-                </div>
-
-                <div className="text-xs text-gray-500">
-                  ${p.price}
-                </div>
-
-                <div className={`text-xs mt-1 ${
-                  outOfStock
-                    ? "text-red-600"
-                    : "text-green-600"
-                }`}>
-                  {outOfStock ? "🔴 Sin stock" : `🟢 ${p.stock} disponibles`}
-                </div>
-
-              </button>
-            )
-        })}
+        {products.map(p=>(
+          <button
+            key={p.id}
+            onClick={()=>addItem(p)}
+            className="bg-gray-100 p-3 rounded-lg text-sm"
+          >
+            {p.name} — ${p.price}
+            <div className="text-xs text-gray-500">
+              Stock: {p.stock}
+            </div>
+          </button>
+        ))}
 
       </div>
 
+      {/* PEDIDO ACTUAL */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h3 className="text-sm font-semibold">
-          Pedido
+          Pedido actual
         </h3>
 
-        {orderItems.length === 0 && (
-          <div className="text-xs text-gray-400">
-            Sin items
-          </div>
-        )}
-
-        {orderItems.map(i=>(
-          <div key={i.product_id} className="text-sm flex justify-between">
+        {currentItems.map(i=>(
+          <div key={i.product_id} className="flex justify-between text-sm">
             <span>{i.name} x{i.quantity}</span>
             <span>${i.price * i.quantity}</span>
           </div>
         ))}
 
-        <div className="border-t pt-2 flex justify-between font-semibold">
+        <div className="flex justify-between font-semibold">
           <span>Total</span>
           <span>${total}</span>
-        </div>
-
-      </div>
-
-      <div className="space-y-2">
-
-        <div className="text-sm font-semibold">
-          Método de pago
-        </div>
-
-        <div className="grid grid-cols-3 gap-2">
-
-          <button
-            onClick={()=>setPayment("cash")}
-            className={`p-3 rounded-lg text-sm ${
-              payment === "cash"
-                ? "bg-black text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            Efectivo
-          </button>
-
-          <button
-            onClick={()=>setPayment("card")}
-            className={`p-3 rounded-lg text-sm ${
-              payment === "card"
-                ? "bg-black text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            Tarjeta
-          </button>
-
-          <button
-            onClick={()=>setPayment("wallet")}
-            className={`p-3 rounded-lg text-sm ${
-              payment === "wallet"
-                ? "bg-black text-white"
-                : "bg-gray-100"
-            }`}
-          >
-            Wallet
-          </button>
-
         </div>
 
       </div>
@@ -322,8 +206,43 @@ export default function AdminRestaurant({ businessId }: { businessId: string }) 
         disabled={loading}
         className="w-full bg-green-600 text-white py-3 rounded-lg"
       >
-        {loading ? "Procesando..." : "Cerrar cuenta"}
+        Cerrar cuenta
       </button>
+
+      {/* 🔥 HISTORIAL */}
+      <div className="bg-white p-4 rounded-xl border space-y-3">
+
+        <h3 className="text-sm font-semibold">
+          Historial de comandas
+        </h3>
+
+        {orders.map(o=>{
+
+          const items = orderItems.filter(i=>i.order_id === o.id)
+
+          return (
+            <div key={o.id} className="border rounded-lg p-3 text-sm space-y-1">
+
+              <div className="font-medium">
+                Mesa {o.table_number}
+              </div>
+
+              <div className="text-xs text-gray-500">
+                {o.payment_method}
+              </div>
+
+              {items.map(i=>(
+                <div key={i.id} className="flex justify-between text-xs">
+                  <span>{i.products?.name} x{i.quantity}</span>
+                  <span>${i.price * i.quantity}</span>
+                </div>
+              ))}
+
+            </div>
+          )
+        })}
+
+      </div>
 
     </div>
 
