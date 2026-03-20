@@ -1,47 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+export default function SplashScreen() {
+  return (
+    <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
 
-export default function SplashScreen({
-  children,
-  logo = "/logo-kume.png",
-  title = "Kume",
-}: {
-  children: React.ReactNode
-  logo?: string
-  title?: string
-}) {
+      <div className="text-center">
 
-  const [showSplash, setShowSplash] = useState(true)
+        <img
+          src="/logo-kume.png"
+          alt="Kume"
+          className="w-72 mx-auto animate-pulse"
+        />
 
-  useEffect(() => {
+        
 
-    const timer = setTimeout(() => {
-      setShowSplash(false)
-    }, 1500)
-
-    return () => clearTimeout(timer)
-
-  }, [])
-
-  if (showSplash) {
-
-    return (
-
-      <div className="flex flex-col items-center justify-center h-screen bg-white">
-
-      <img
-         src={logo}
-    className="w-48 md:w-72 animate-fade-in"
-      />
-
-      
+      </div>
 
     </div>
-
-    )
-
-  }
-
-  return <>{children}</>
+  )
 }

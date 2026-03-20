@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import AdminRestaurant from "@/components/AdminRestaurant"
 import CashSummary from "@/components/CashSummary"
+import SplashScreen from "@/components/SplashScreen"
 import { useParams } from "next/navigation"
 
 type Business = {
@@ -32,12 +33,12 @@ export default function Page() {
       .eq("slug", slug)
       .single()
 
-    setBiz(data)
+    if(data){
+      setBiz(data)
+    }
   }
 
-  if (!biz) {
-    return <div className="p-10">Cargando...</div>
-  }
+  if (!biz) return <SplashScreen />
 
   return (
 
