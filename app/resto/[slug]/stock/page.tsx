@@ -10,6 +10,7 @@ type Product = {
   name: string
   stock: number
   price: number
+  category?: string
 }
 
 type Business = {
@@ -17,6 +18,8 @@ type Business = {
   name: string
   slug: string
 }
+
+const CATEGORIES = ["bebidas","platos","postres"]
 
 export default function Page() {
 
@@ -29,6 +32,7 @@ export default function Page() {
   const [newName,setNewName] = useState("")
   const [newPrice,setNewPrice] = useState("")
   const [newStock,setNewStock] = useState("")
+  const [newCategory,setNewCategory] = useState("platos")
 
   useEffect(()=>{
     if(!slug) return
@@ -69,6 +73,20 @@ export default function Page() {
     )
   }
 
+  const updateCategory = async (id:string, category:string) => {
+
+    await supabase
+      .from("products")
+      .update({ category })
+      .eq("id", id)
+
+    setProducts(prev =>
+      prev.map(p =>
+        p.id === id ? { ...p, category } : p
+      )
+    )
+  }
+
   const deleteProduct = async (id:string) => {
 
     await supabase
@@ -89,7 +107,8 @@ export default function Page() {
         business_id: biz.id,
         name: newName,
         price: Number(newPrice),
-        stock: Number(newStock || 0)
+        stock: Number(newStock || 0),
+        category: newCategory
       })
       .select()
       .single()
@@ -99,6 +118,7 @@ export default function Page() {
       setNewName("")
       setNewPrice("")
       setNewStock("")
+      setNewCategory("platos")
     }
   }
 
@@ -129,6 +149,7 @@ export default function Page() {
         Stock — {biz.name}
       </h1>
 
+      {/* NUEVO PRODUCTO */}
       <div className="bg-white p-4 rounded-xl border space-y-2">
 
         <h2 className="text-sm font-semibold">
@@ -156,6 +177,18 @@ export default function Page() {
           className="w-full border px-3 py-2 rounded-lg text-sm"
         />
 
+        <select
+          value={newCategory}
+          onChange={e=>setNewCategory(e.target.value)}
+          className="w-full border px-3 py-2 rounded-lg text-sm"
+        >
+          {CATEGORIES.map(c=>(
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={addProduct}
           className="bg-black text-white px-3 py-2 rounded-lg text-sm"
@@ -165,6 +198,7 @@ export default function Page() {
 
       </div>
 
+      {/* LISTA */}
       <div className="bg-white p-4 rounded-xl border space-y-3">
 
         {products.map(p=>{
@@ -174,11 +208,28 @@ export default function Page() {
           return (
             <div key={p.id} className="flex items-center justify-between text-sm">
 
-              <div>
+              <div className="space-y-1">
+
                 <div>{p.name}</div>
+
                 <div className="text-xs text-gray-500">
                   ${p.price}
                 </div>
+
+                {/* 💥 EDIT CATEGORY */}
+                <select
+                  value={p.category || ""}
+                  onChange={(e)=>updateCategory(p.id, e.target.value)}
+                  className="text-xs border rounded px-2 py-1"
+                >
+                  <option value="">sin categoría</option>
+                  {CATEGORIES.map(c=>(
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+
                 <div className={`text-xs ${
                   p.stock === 0
                     ? "text-red-600"
@@ -190,6 +241,7 @@ export default function Page() {
                     ? "Sin stock"
                     : `Stock: ${p.stock}`}
                 </div>
+
               </div>
 
               <div className="flex items-center gap-2">

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import CashSummary from "@/components/CashSummary"
 import Link from "next/link"
+import GallerySection from "@/components/GallerySection"
+import HeroUpload from "@/components/HeroUpload"
 
 type Appointment = {
   id: string
@@ -16,6 +18,10 @@ type Business = {
   id: string
   name: string
   slug: string
+  has_gallery: boolean
+  type: string
+  hero_text?: string
+  hero_image?: string
 }
 
 export default function Page({
@@ -27,6 +33,10 @@ export default function Page({
   const [slug,setSlug] = useState<string | null>(null)
   const [biz,setBiz] = useState<Business | null>(null)
   const [appointments,setAppointments] = useState<Appointment[]>([])
+
+  const [heroText,setHeroText] = useState("")
+  const [heroImage,setHeroImage] = useState("")
+  const [saving,setSaving] = useState(false)
 
   useEffect(()=>{
     const loadParams = async () => {
@@ -52,6 +62,8 @@ export default function Page({
     if(!bizData) return
 
     setBiz(bizData)
+    setHeroText(bizData.hero_text || "")
+    setHeroImage(bizData.hero_image || "")
 
     const { data: appData } = await supabase
       .from("appointments")
@@ -60,6 +72,23 @@ export default function Page({
       .order("created_at", { ascending: false })
 
     setAppointments(appData || [])
+  }
+
+  const saveHero = async () => {
+
+    if(!biz) return
+
+    setSaving(true)
+
+    await supabase
+      .from("business")
+      .update({
+        hero_text: heroText,
+        hero_image: heroImage
+      })
+      .eq("id", biz.id)
+
+    setSaving(false)
   }
 
   const updateStatus = async (id:string, status:string) => {
@@ -85,24 +114,68 @@ export default function Page({
         {biz.name}
       </h1>
 
-      {/* 🔥 BOTONES LARGOS */}
-      <div className="space-y-2">
+      {/* HERO */}
+      <div className="bg-white p-4 rounded-xl border space-y-3">
 
-        <Link
-          href={`/resto/${biz.slug}/stock`}
-          className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
-        >
-          Gestionar stock
-        </Link>
+        <h2 className="text-sm font-semibold">
+          Contenido principal
+        </h2>
 
-        <Link
-          href={`/resto/${biz.slug}`}
-          className="block text-center bg-green-600 text-white py-3 rounded-lg text-sm"
+        <HeroUpload
+          businessId={biz.id}
+          onUpload={(url)=>setHeroImage(url)}
+        />
+
+        {heroImage && (
+          <div className="w-full h-48 overflow-hidden rounded-lg">
+            <img
+              src={heroImage}
+              className="w-full h-full object-cover object-center"
+            />
+          </div>
+        )}
+
+        <textarea
+          placeholder="Texto principal"
+          value={heroText}
+          onChange={e=>setHeroText(e.target.value)}
+          className="w-full p-3 rounded-lg border text-sm"
+          rows={4}
+        />
+
+        <button
+          onClick={saveHero}
+          className="w-full bg-green-600 text-white py-2 rounded-lg text-sm"
         >
-          Ver comandas
-        </Link>
+          {saving ? "Guardando..." : "Guardar"}
+        </button>
 
       </div>
+
+      {/* 🔥 GALERÍAS DINAMICAS */}
+     
+   <div className="space-y-4">
+
+  {Array.from({ length: (biz as any).gallery_count || 1 }).map((_,i) => {
+
+    const section = `gallery_${i+1}`
+
+    return (
+      <GallerySection
+        key={section}
+        businessId={biz.id}
+        section={section}
+        index={i}
+        currentName={(biz as any).gallery_names?.[i]}
+        currentPage={(biz as any).gallery_pages?.[i]}
+        allPages={(biz as any).gallery_pages || []}
+        onChange={loadData} // 💥 refresh real
+      />
+    )
+
+  })}
+
+</div>
 
       {/* RESERVAS */}
       <div className="bg-white p-4 rounded-xl border space-y-3">

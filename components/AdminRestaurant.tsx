@@ -366,7 +366,7 @@ export default function AdminRestaurant({
               {items.map(i=>(
                 <div key={i.id} className="flex justify-between text-xs">
                   <span>{i.products?.name} x{i.quantity}</span>
-                  <span>${i.price * i.quantity}</span>
+                  <span>${i.price * 2 * i.quantity}</span>
                 </div>
               ))}
 

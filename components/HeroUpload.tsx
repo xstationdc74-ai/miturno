@@ -3,14 +3,12 @@
 import { supabase } from "@/lib/supabase/client"
 import { useState } from "react"
 
-export default function GalleryUpload({
+export default function HeroUpload({
   businessId,
-  section,
   onUpload
 }:{
   businessId:string
-  section:string
-  onUpload?:()=>void
+  onUpload:(url:string)=>void
 }){
 
   const [loading,setLoading] = useState(false)
@@ -22,7 +20,7 @@ export default function GalleryUpload({
 
     setLoading(true)
 
-    const fileName = `${Date.now()}-${file.name}`
+    const fileName = `hero-${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage
       .from("business-images")
@@ -36,33 +34,21 @@ export default function GalleryUpload({
 
     const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/business-images/${fileName}`
 
-    await supabase
-      .from("gallery")
-      .insert({
-        business_id:businessId,
-        image_url:publicUrl,
-        section:section
-      })
+    onUpload(publicUrl)
 
     setLoading(false)
-
-    onUpload?.()
   }
 
   return(
 
-    <div>
-
-      <label className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg text-sm cursor-pointer">
-        {loading ? "Subiendo..." : "Subir imagen"}
-        <input
-          type="file"
-          onChange={handleUpload}
-          className="hidden"
-        />
-      </label>
-
-    </div>
+    <label className="block bg-green-600 text-white text-center py-2 rounded-lg text-sm cursor-pointer">
+      {loading ? "Subiendo..." : "Subir banner"}
+      <input
+        type="file"
+        onChange={handleUpload}
+        className="hidden"
+      />
+    </label>
 
   )
 
