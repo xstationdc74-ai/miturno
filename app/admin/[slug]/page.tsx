@@ -6,6 +6,7 @@ import CashSummary from "@/components/CashSummary"
 import Link from "next/link"
 import GallerySection from "@/components/GallerySection"
 import HeroUpload from "@/components/HeroUpload"
+import EventSection from "@/components/EventSection"
 
 type Appointment = {
   id: string
@@ -174,6 +175,19 @@ export default function Page({
     )
 
   })}
+
+ {/* 🔥 EVENTOS SOLO PARA RESIDENCIAS */}
+{biz.type === "residencia" && (
+  <div className="bg-white p-4 rounded-xl border space-y-3">
+
+    <h2 className="text-sm font-semibold">
+      Eventos / Residencias
+    </h2>
+
+    <EventSection businessId={biz.id} />
+
+  </div>
+)}
 
 </div>
 

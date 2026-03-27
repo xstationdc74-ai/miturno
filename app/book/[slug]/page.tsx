@@ -43,6 +43,8 @@ export default function Page({
 
   const [selectedHour,setSelectedHour] = useState<string | null>(null)
   const [selectedService,setSelectedService] = useState<Service | null>(null)
+  const [loading,setLoading] = useState(false)
+const [success,setSuccess] = useState(false)
 
   const [name,setName] = useState("")
   const [phone,setPhone] = useState("")
@@ -182,43 +184,48 @@ export default function Page({
       </div>
 
       <button
-        onClick={async () => {
+  disabled={loading || success}
+  onClick={async () => {
 
-          if(!biz.phone){
-            alert("Sin teléfono configurado")
-            return
-          }
+    if(!biz.phone){
+      alert("Sin teléfono configurado")
+      return
+    }
 
-          if(!name || !phone || !selectedService || !selectedHour){
-            alert("Completá todos los campos")
-            return
-          }
+    if(!name || !phone || !selectedService || !selectedHour){
+      alert("Completá todos los campos")
+      return
+    }
 
-          await supabase.from("appointments").insert({
-            business_id: biz.id,
-            service_id: selectedService.id,
-            client_name: name,
-            client_phone: phone,
-            start_time: new Date().toISOString(),
-            status: "pending",
-            price_snapshot: selectedService.price
-          })
+    setLoading(true)
 
-          const url = `https://wa.me/${biz.phone}?text=${encodeURIComponent(
-            `Reserva en ${biz.name}
+    await supabase.from("appointments").insert({
+      business_id: biz.id,
+      service_id: selectedService.id,
+      client_name: name,
+      client_phone: phone,
+      start_time: new Date().toISOString(),
+      status: "pending",
+      price_snapshot: selectedService.price
+    })
+
+    const url = `https://wa.me/${biz.phone}?text=${encodeURIComponent(
+      `Reserva en ${biz.name}
 Cliente: ${name}
 Tel: ${phone}
 Servicio: ${selectedService.name}
 Horario: ${selectedHour}`
-          )}`
+    )}`
 
-          window.open(url, "_blank")
+    window.open(url, "_blank")
 
-        }}
-        className="w-full bg-green-600 text-white py-3 rounded-lg"
-      >
-        Reservar
-      </button>
+    setSuccess(true)
+    setLoading(false)
+  }}
+  className="w-full bg-green-600 text-white py-3 rounded-lg"
+>
+  {loading ? "Enviando..." : success ? "Reserva enviada ✅" : "Reservar"}
+</button>
 
     </div>
   )

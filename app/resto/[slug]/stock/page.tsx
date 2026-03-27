@@ -52,9 +52,11 @@ export default function Page() {
     setBiz(bizData)
 
     const { data: prodData } = await supabase
-      .from("products")
-      .select("*")
-      .eq("business_id", bizData.id)
+     .from("products")
+.select("*")
+.eq("business_id", bizData.id)
+.order("category", { ascending: true })
+.order("name", { ascending: true })
 
     setProducts(prodData || [])
   }
@@ -248,7 +250,7 @@ export default function Page() {
 
                 <input
                   type="number"
-                  value={p.stock}
+                  value={p.stock ?? 0}
                   onChange={(e)=>updateStock(p.id, Number(e.target.value))}
                   className="w-20 border rounded px-2 py-1 text-sm"
                 />

@@ -1,59 +1,30 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import Link from "next/link"
 
-type Product = {
-  id: string
-  name: string
-  price: number
-  stock: number
-  category: string | null
-}
-
-type Order = {
-  id: string
-  table_number: string
-  payment_method: string
-  created_at: string
-}
-
-type OrderItem = {
-  id: string
-  order_id: string
-  product_id: string
-  quantity: number
-  price: number
-  products: {
-    name: string
-  }
-}
-
 export default function AdminRestaurant({
   businessId,
   slug
-}: {
-  businessId: string
-  slug: string
-}) {
+}:{
+  businessId:string
+  slug?:string
+}){
 
-  const [products,setProducts] = useState<Product[]>([])
+  const [products,setProducts] = useState<any[]>([])
+  const [orders,setOrders] = useState<any[]>([])
   const [orderItems,setOrderItems] = useState<any[]>([])
-  const [orders,setOrders] = useState<Order[]>([])
-
   const [currentItems,setCurrentItems] = useState<any[]>([])
-  const [table,setTable] = useState("1")
-  const [loading,setLoading] = useState(false)
-  const [payment,setPayment] = useState("cash")
-
   const [category,setCategory] = useState("bebidas")
+  const [table,setTable] = useState(1)
+  const [payment,setPayment] = useState("cash")
+  const [loading,setLoading] = useState(false)
 
   useEffect(()=>{
-    if(!businessId) return
     loadProducts()
     loadOrders()
-  },[businessId])
+  },[])
 
   const loadProducts = async () => {
     const { data } = await supabase
@@ -66,54 +37,66 @@ export default function AdminRestaurant({
 
   const loadOrders = async () => {
 
-    const { data } = await supabase
+    const { data: ordersData } = await supabase
       .from("orders")
       .select("*")
       .eq("business_id", businessId)
-      .order("created_at",{ ascending:false })
+      .order("created_at",{ascending:false})
 
-    setOrders(data || [])
-
-    const { data: items } = await supabase
+    const { data: itemsData } = await supabase
       .from("order_items")
       .select("*, products(name)")
-    
-    setOrderItems(items || [])
+
+    setOrders(ordersData || [])
+    setOrderItems(itemsData || [])
   }
 
-  const addItem = (product:Product) => {
+  const addItem = async (p:any) => {
 
-    if(product.stock === 0) return
+    // 🔥 bajar stock al agregar
+    await adjustStock(p.id, -1)
 
     setCurrentItems(prev => {
 
-      const existing = prev.find(p => p.product_id === product.id)
+      const exists = prev.find(i=>i.product_id === p.id)
 
-      if(existing){
-        return prev.map(p =>
-          p.product_id === product.id
-            ? { ...p, quantity: p.quantity + 1 }
-            : p
+      if(exists){
+        return prev.map(i =>
+          i.product_id === p.id
+            ? {...i, quantity:i.quantity+1}
+            : i
         )
       }
 
-      return [
-        ...prev,
-        {
-          product_id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1
-        }
-      ]
-
+      return [...prev,{
+        product_id:p.id,
+        name:p.name,
+        price:p.price,
+        quantity:1
+      }]
     })
   }
 
-  const total = currentItems.reduce(
-    (acc,item)=> acc + item.price * item.quantity,
-    0
-  )
+  const adjustStock = async (productId:string, delta:number) => {
+
+    const product = products.find(p => p.id === productId)
+    if(!product) return
+
+    const newStock = (product.stock || 0) + delta
+
+    await supabase
+      .from("products")
+      .update({ stock: newStock })
+      .eq("id", productId)
+
+    setProducts(prev =>
+      prev.map(p =>
+        p.id === productId ? { ...p, stock: newStock } : p
+      )
+    )
+  }
+
+  const total = currentItems.reduce((acc,i)=>acc + i.price * i.quantity,0)
 
   const handleCloseOrder = async () => {
 
@@ -126,7 +109,8 @@ export default function AdminRestaurant({
       .insert({
         business_id: businessId,
         table_number: table,
-        payment_method: payment
+        payment_method: payment,
+        status: "closed"
       })
       .select()
       .single()
@@ -146,15 +130,6 @@ export default function AdminRestaurant({
       payment_method: payment
     })
 
-    for (const i of currentItems) {
-      await supabase
-        .from("products")
-        .update({
-          stock: (products.find(p=>p.id===i.product_id)?.stock || 0) - i.quantity
-        })
-        .eq("id", i.product_id)
-    }
-
     setCurrentItems([])
     setLoading(false)
 
@@ -162,7 +137,35 @@ export default function AdminRestaurant({
     loadOrders()
   }
 
-  const filteredProducts = products.filter(p => p.category === category)
+  const reopenOrder = async (orderId:string) => {
+
+    const ok = confirm("¿Reabrir esta cuenta?")
+    if(!ok) return
+
+    await supabase
+      .from("orders")
+      .update({ status: "open" })
+      .eq("id", orderId)
+
+    const items = orderItems
+      .filter(i => i.order_id === orderId)
+      .map(i => ({
+        product_id: i.product_id,
+        name: i.products?.name,
+        price: i.price,
+        quantity: i.quantity
+      }))
+
+    setCurrentItems(items)
+
+    window.scrollTo({ top: 0, behavior: "smooth" })
+
+    loadOrders()
+  }
+
+ const filteredProducts = products.filter(
+  p => p.category === category && p.stock > 0
+)
 
   return(
 
@@ -177,33 +180,16 @@ export default function AdminRestaurant({
         </Link>
       )}
 
-      {/* CATEGORÍAS */}
-      <div className="flex gap-3 overflow-x-auto pb-2">
+      <select
+        value={payment}
+        onChange={(e)=>setPayment(e.target.value)}
+        className="w-full border p-2 rounded-lg"
+      >
+        <option value="cash">Efectivo</option>
+        <option value="card">Tarjeta</option>
+        <option value="wallet">Wallet</option>
+      </select>
 
-        {[
-          { key: "bebidas", label: "🍺 Bebidas" },
-          { key: "platos", label: "🍝 Platos" },
-          { key: "postres", label: "🍰 Postres" }
-        ].map(c => (
-
-          <button
-            key={c.key}
-            onClick={()=>setCategory(c.key)}
-            className={`
-              px-5 py-3 rounded-xl text-sm whitespace-nowrap font-medium transition
-              ${category === c.key
-                ? "bg-green-600 text-white shadow"
-                : "bg-gray-100 active:scale-95"}
-            `}
-          >
-            {c.label}
-          </button>
-
-        ))}
-
-      </div>
-
-      {/* PRODUCTOS */}
       <div className="grid grid-cols-2 gap-3">
 
         {filteredProducts.map(p => {
@@ -215,118 +201,86 @@ export default function AdminRestaurant({
               key={p.id}
               onClick={() => addItem(p)}
               disabled={noStock}
-              className={`
-                p-4 rounded-xl text-left transition transform
-                ${noStock
-                  ? "bg-gray-200 text-gray-400"
-                  : "bg-white active:scale-95 shadow-sm"}
-              `}
+              className={`p-4 rounded-xl text-left ${noStock ? "bg-gray-200" : "bg-white shadow"}`}
             >
-
-              <div className="text-base font-semibold">
-                {p.name}
-              </div>
-
-              <div className="text-sm text-gray-500">
-                ${p.price}
-              </div>
-
-              <div className="text-[10px] text-green-500 mt-1 opacity-70">
-                tap para agregar
-              </div>
-
-              <div className={`text-xs mt-1 ${
-                noStock
-                  ? "text-red-500"
-                  : p.stock <= 2
-                    ? "text-yellow-600"
-                    : "text-green-600"
-              }`}>
-                {noStock ? "Sin stock" : `Stock: ${p.stock}`}
-              </div>
-
+              <div className="font-semibold">{p.name}</div>
+              <div className="text-sm">${p.price}</div>
             </button>
           )
         })}
 
       </div>
 
-      {/* PEDIDO EDITABLE */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h3 className="text-sm font-semibold">
-          Pedido actual
-        </h3>
-
-        {currentItems.length === 0 && (
-          <div className="text-sm text-gray-400">
-            Sin productos
-          </div>
-        )}
+      <div className="bg-white p-4 rounded-xl border space-y-2">
 
         {currentItems.map(i=>(
           <div key={i.product_id} className="flex justify-between items-center text-sm">
 
-            <div>
-              <div className="font-medium">{i.name}</div>
-              <div className="text-xs text-gray-500">${i.price} c/u</div>
-            </div>
+            <span className="flex-1">{i.name}</span>
 
             <div className="flex items-center gap-2">
 
               <button
                 onClick={()=>{
+                  adjustStock(i.product_id, +1)
+
                   setCurrentItems(prev =>
                     prev
-                      .map(p =>
-                        p.product_id === i.product_id
-                          ? { ...p, quantity: p.quantity - 1 }
-                          : p
+                      .map(item =>
+                        item.product_id === i.product_id
+                          ? {...item, quantity: item.quantity - 1}
+                          : item
                       )
-                      .filter(p => p.quantity > 0)
+                      .filter(item => item.quantity > 0)
                   )
                 }}
-                className="bg-gray-200 px-2 py-1 rounded"
+                className="bg-gray-200 px-2 rounded"
               >
                 -
               </button>
 
-              <span className="w-6 text-center">
-                {i.quantity}
-              </span>
+              <span>{i.quantity}</span>
 
               <button
                 onClick={()=>{
+                  adjustStock(i.product_id, -1)
+
                   setCurrentItems(prev =>
-                    prev.map(p =>
-                      p.product_id === i.product_id
-                        ? { ...p, quantity: p.quantity + 1 }
-                        : p
+                    prev.map(item =>
+                      item.product_id === i.product_id
+                        ? {...item, quantity: item.quantity + 1}
+                        : item
                     )
                   )
                 }}
-                className="bg-gray-200 px-2 py-1 rounded"
+                className="bg-gray-200 px-2 rounded"
               >
                 +
               </button>
 
               <button
                 onClick={()=>{
+                  adjustStock(i.product_id, i.quantity)
+
                   setCurrentItems(prev =>
-                    prev.filter(p => p.product_id !== i.product_id)
+                    prev.filter(item => item.product_id !== i.product_id)
                   )
                 }}
-                className="bg-red-500 text-white px-2 py-1 rounded"
+                className="bg-red-500 text-white px-2 rounded"
               >
                 x
               </button>
 
             </div>
 
+            <span className="w-16 text-right">
+              ${i.price * i.quantity}
+            </span>
+
           </div>
         ))}
 
-        <div className="border-t pt-2 flex justify-between text-lg font-semibold">
+        <div className="font-semibold flex justify-between">
           <span>Total</span>
           <span>${total}</span>
         </div>
@@ -336,39 +290,40 @@ export default function AdminRestaurant({
       <button
         onClick={handleCloseOrder}
         disabled={loading}
-        className="w-full bg-green-600 text-white py-4 rounded-xl text-lg font-semibold active:scale-95"
+        className="w-full bg-green-600 text-white py-3 rounded-lg"
       >
-        {loading ? "Procesando..." : "Cerrar cuenta"}
+        Cerrar cuenta
       </button>
 
-      {/* HISTORIAL */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h3 className="text-sm font-semibold">
-          Historial de comandas
-        </h3>
+      <div className="space-y-2">
 
         {orders.map(o=>{
 
           const items = orderItems.filter(i=>i.order_id === o.id)
 
           return (
-            <div key={o.id} className="border rounded-lg p-3 text-sm space-y-1">
+            <div key={o.id} className="border p-3 rounded-lg text-sm space-y-1">
 
-              <div className="font-medium">
-                Mesa {o.table_number}
-              </div>
-
-              <div className="text-xs text-gray-500">
-                {o.payment_method}
+              <div className="flex justify-between">
+                <span>Mesa {o.table_number}</span>
+                <span>{o.payment_method}</span>
               </div>
 
               {items.map(i=>(
                 <div key={i.id} className="flex justify-between text-xs">
                   <span>{i.products?.name} x{i.quantity}</span>
-                  <span>${i.price * 2 * i.quantity}</span>
+                  <span>${i.price * i.quantity}</span>
                 </div>
               ))}
+
+              {o.status === "closed" && (
+                <button
+                  onClick={()=>reopenOrder(o.id)}
+                  className="bg-green-600 text-white px-2 py-1 rounded text-xs mt-1"
+                >
+                  Reabrir cuenta
+                </button>
+              )}
 
             </div>
           )
@@ -379,4 +334,5 @@ export default function AdminRestaurant({
     </div>
 
   )
+
 }

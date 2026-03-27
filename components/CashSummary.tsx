@@ -17,9 +17,12 @@ export default function CashSummary({ businessId }: { businessId: string }) {
     wallet: 0
   })
 
+  const [loading,setLoading] = useState(false)
+
   useEffect(()=>{
+    if(!businessId) return
     load()
-  },[])
+  },[businessId])
 
   const load = async () => {
 
@@ -29,6 +32,7 @@ export default function CashSummary({ businessId }: { businessId: string }) {
       .from("sales")
       .select("amount,payment_method")
       .eq("business_id", businessId)
+      .eq("closed", false)
       .gte("created_at", `${today}T00:00:00`)
       .lte("created_at", `${today}T23:59:59`)
 
@@ -47,9 +51,41 @@ export default function CashSummary({ businessId }: { businessId: string }) {
 
   const total = summary.cash + summary.card + summary.wallet
 
+  const handleCloseDay = async () => {
+
+    if(total === 0){
+      alert("No hay ventas para cerrar")
+      return
+    }
+
+    const ok = confirm("¿Cerrar caja del día?")
+    if(!ok) return
+
+    setLoading(true)
+
+    await supabase
+      .from("cash_closings")
+      .insert({
+        business_id: businessId,
+        total: total
+      })
+
+    await supabase
+      .from("sales")
+      .update({ closed: true })
+      .eq("business_id", businessId)
+      .or("closed.is.null,closed.eq.false")
+
+    alert("Caja cerrada ✅")
+
+    await load()
+
+    setLoading(false)
+  }
+
   return (
 
-    <div className="bg-white p-4 rounded-xl border space-y-2">
+    <div className="bg-white p-4 rounded-xl border space-y-3">
 
       <div className="font-semibold">
         Caja del día
@@ -74,6 +110,14 @@ export default function CashSummary({ businessId }: { businessId: string }) {
         <span>Total</span>
         <span>${total}</span>
       </div>
+
+      <button
+        onClick={handleCloseDay}
+        disabled={loading}
+        className="w-full bg-black text-white py-2 rounded-lg text-sm"
+      >
+        {loading ? "Cerrando..." : "Cerrar caja"}
+      </button>
 
     </div>
 

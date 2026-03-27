@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import AdminRestaurant from "@/components/AdminRestaurant"
 import CashSummary from "@/components/CashSummary"
+import CashHistory from "@/components/CashHistory"
 import SplashScreen from "@/components/SplashScreen"
 import { useParams } from "next/navigation"
 
@@ -57,6 +58,8 @@ export default function Page() {
         </div>
 
         <CashSummary businessId={biz.id} />
+
+        <CashHistory businessId={biz.id} />
 
         <AdminRestaurant
           businessId={biz.id}

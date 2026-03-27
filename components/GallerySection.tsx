@@ -5,7 +5,7 @@ import Gallery from "./Gallery"
 import GalleryUpload from "./GalleryUpload"
 import { supabase } from "@/lib/supabase/client"
 
-const PAGE_OPTIONS = ["home","residencia","talleres","obras"]
+
 
 export default function GallerySection({
   businessId,
@@ -30,9 +30,9 @@ export default function GallerySection({
   const [page,setPage] = useState(currentPage || "")
   const [saving,setSaving] = useState(false)
 
-  const availablePages = PAGE_OPTIONS.filter(p =>
-    !allPages?.includes(p) || p === page
-  )
+ const availablePages = (allPages || []).filter(p =>
+  !allPages?.includes(p) || p === page
+)
 
   const saveAll = async () => {
 
@@ -76,20 +76,22 @@ export default function GallerySection({
       />
 
       {/* SELECT */}
-      <select
-        value={page}
-        onChange={e=>setPage(e.target.value)}
-        className="w-full h-9 px-2 rounded border text-sm"
-      >
-        <option value="">Seleccionar sección</option>
 
-        {availablePages.map(p=>(
-          <option key={p} value={p}>
-            {p}
-          </option>
-        ))}
+     {allPages && allPages.length > 1 && (
+  <select
+    value={page}
+    onChange={e=>setPage(e.target.value)}
+    className="w-full h-9 px-2 rounded border text-sm"
+  >
+    <option value="">Seleccionar sección</option>
 
-      </select>
+    {availablePages.map(p=>(
+      <option key={p} value={p}>
+        {p}
+      </option>
+    ))}
+  </select>
+)}
 
       <button
         onClick={saveAll}
@@ -108,7 +110,6 @@ export default function GallerySection({
         key={refresh}
         businessId={businessId}
         section={section}
-        editable
       />
 
     </div>

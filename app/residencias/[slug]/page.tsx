@@ -1,4 +1,4 @@
-"use client"
+'use client'
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
@@ -11,6 +11,7 @@ type Business = {
   description: string
   hero_text?: string
   hero_image?: string
+  gallery_pages?: string[]
 }
 
 export default function ResidenciaPage(){
@@ -40,6 +41,16 @@ export default function ResidenciaPage(){
   if(!biz){
     return <div className="p-10">Cargando...</div>
   }
+
+  // 🔥 calcular gallery dinámica para HOME
+  const galleryIndex = biz.gallery_pages?.findIndex(
+    (p)=>p==="home"
+  )
+
+  const gallerySection =
+    galleryIndex !== undefined && galleryIndex !== -1
+      ? `gallery_${galleryIndex+1}`
+      : null
 
   return(
 
@@ -72,15 +83,15 @@ export default function ResidenciaPage(){
           </div>
         )}
 
-        {/* 💥 GALERÍA PREVIEW */}
-        <div>
+        {/* GALERÍA DINÁMICA */}
+        {gallerySection && (
           <Gallery
             businessId={biz.id}
-            section="c421_home"
+            section={gallerySection}
           />
-        </div>
+        )}
 
-        {/* 💥 BOTONES ESTILO KUME */}
+        {/* BOTONES */}
         <div className="flex gap-3 justify-center flex-wrap">
 
           <a
