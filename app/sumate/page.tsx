@@ -10,8 +10,21 @@ export default function SumatePage(){
   const [phone,setPhone] = useState("")
 
   const handleSubmit = () => {
-    alert("Gracias 💚 Te vamos a contactar pronto")
+
+  if(!name || !business || !phone){
+    alert("Completá los datos 🙏")
+    return
   }
+
+  const text = `Hola! Soy ${name}.
+Tengo un espacio llamado "${business}" (${type || "sin tipo"}).
+Mi WhatsApp es ${phone}.
+Me gustaría sumarme a Kume 🌱`
+
+  const url = `https://wa.me/5491134490093?text=${encodeURIComponent(text)}`
+
+  window.open(url, "_blank")
+}
 
   return(
 
