@@ -90,11 +90,13 @@ export default function Page() {
           ) : (
             <>
               {selected.cover_image && (
-                <img
-                  src={selected.cover_image}
-                  className="w-full h-32 object-cover rounded-lg"
-                />
-              )}
+  <div className="w-full aspect-[16/9] overflow-hidden rounded-lg">
+    <img
+      src={selected.cover_image}
+      className="w-full h-full object-cover"
+    />
+  </div>
+)}
 
               <div>
                 <div className="font-semibold text-lg">

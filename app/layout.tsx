@@ -29,18 +29,41 @@ export default function RootLayout({
 
         {/* 🔥 HEADER */}
         <header className="bg-white border-b">
-          <div className="max-w-6xl mx-auto flex items-center justify-between p-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-14">
 
-            <a href="/" className="text-green-600 font-bold">
-              Kume
+            {/* LOGO */}
+            <a href="/" className="flex items-center">
+              <img
+                src="/header-kume.png"
+                className="h-8 w-auto"
+                alt="Kume"
+              />
             </a>
 
-            <div className="flex gap-4 text-sm">
-              <a href="/explorar">Explorar</a>
-              <a href="/sobre">Sobre Kume</a>
-              <a href="/admin" className="bg-green-600 text-white px-3 py-1 rounded-lg">
-                Sumar lugar
+            {/* NAV */}
+            <div className="flex items-center gap-2 text-sm">
+
+              <a
+                href="/explorar"
+                className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              >
+                Explorar
               </a>
+
+              <a
+                href="/sobre"
+                className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
+              >
+                Sobre Kume
+              </a>
+
+              <a
+                href="/sumate"
+                className="bg-green-600 text-white px-4 py-2 rounded-lg"
+              >
+                Sumate a Kume
+              </a>
+
             </div>
 
           </div>

@@ -79,13 +79,13 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
             <div className="w-[220px]">
 
               {/* IMAGEN */}
-              <div className="w-full h-28 bg-white rounded-lg overflow-hidden mb-2 flex items-center justify-center">
+              <div className="w-full h-28 bg-gray-100 rounded-lg overflow-hidden mb-2">
 
-                {b.cover_image ? (
-                  <img
-                    src={b.cover_image}
-                    className="max-h-full max-w-full object-contain"
-                  />
+  {b.cover_image ? (
+    <img
+      src={b.cover_image}
+      className="w-full h-full object-cover"
+    />
                 ) : (
                   <div className="text-xs text-gray-400">
                     Sin imagen

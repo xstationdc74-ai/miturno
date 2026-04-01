@@ -19,7 +19,6 @@ export default function ExplorarPage() {
   const [loading, setLoading] = useState(true)
   const [type, setType] = useState<string | null>(null)
 
-  // 🔥 agarramos el query param SOLO en cliente
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     setType(params.get("type"))
@@ -33,7 +32,7 @@ export default function ExplorarPage() {
 
     setLoading(true)
 
-    let query = supabase.from("business").select("*")
+    let query = supabase.from("business").select("*").eq("is_active", true)
 
     if (type) {
       query = query.eq("type", type)
@@ -47,95 +46,83 @@ export default function ExplorarPage() {
 
   return (
 
-    <div style={{ maxWidth: 900, margin: "0 auto", padding: 20 }}>
+    <div className="max-w-6xl mx-auto px-4 py-8">
 
-      <h1 style={{ fontSize: 28, fontWeight: "bold", marginBottom: 20 }}>
-        Explorar negocios
+      <h1 className="text-2xl font-semibold mb-6">
+        Explorar lugares
       </h1>
 
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginBottom: 20 }}>
+      {/* FILTROS */}
+      <div className="flex gap-2 flex-wrap mb-6">
 
-        <Link href="/explorar">
-          <button style={{ padding: "8px 14px", background: "#eee", borderRadius: 6 }}>
-            Todos
-          </button>
-        </Link>
+        {[
+  { label: "Todos", value: null },
+  { label: "Barberías", value: "barberia" },
+  { label: "Comida", value: "comida" },
+  { label: "Arte", value: "arte" },
+  { label: "Bienestar", value: "bienestar" },
+].map(f => {
 
-        <Link href="/explorar?type=barberia">
-          <button style={{ padding: "8px 14px", background: "#eee", borderRadius: 6 }}>
-            Barberías
-          </button>
-        </Link>
+  const isActive = type === f.value || (!type && f.value === null)
 
-        <Link href="/explorar?type=comida">
-          <button style={{ padding: "8px 14px", background: "#eee", borderRadius: 6 }}>
-            Comida
-          </button>
-        </Link>
-
-        <Link href="/explorar?type=arte">
-          <button style={{ padding: "8px 14px", background: "#eee", borderRadius: 6 }}>
-            Arte
-          </button>
-        </Link>
-
-        <Link href="/explorar?type=bienestar">
-          <button style={{ padding: "8px 14px", background: "#eee", borderRadius: 6 }}>
-            Bienestar
-          </button>
-        </Link>
+  return (
+    <Link
+      key={f.label}
+      href={f.value ? `/explorar?type=${f.value}` : "/explorar"}
+    >
+      <button
+        className={`px-3 py-1.5 text-sm rounded-lg transition ${
+          isActive
+            ? "bg-green-600 text-white"
+            : "bg-gray-100 hover:bg-gray-200"
+        }`}
+      >
+        {f.label}
+      </button>
+    </Link>
+  )
+})}
 
       </div>
 
-      {loading && <p>Cargando...</p>}
+      {loading && (
+        <p className="text-sm text-gray-500">Cargando...</p>
+      )}
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-          gap: 20,
-        }}
-      >
+      {/* GRID */}
+      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
 
         {businesses.map((b) => (
           <Link key={b.id} href={`/book/${b.slug}`}>
 
-            <div
-              style={{
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                overflow: "hidden",
-                cursor: "pointer",
-              }}
-            >
+            <div className="bg-white rounded-xl overflow-hidden border hover:shadow-md transition cursor-pointer">
 
-              {b.cover_image && (
-                <img
-                  src={b.cover_image}
-                  style={{ width: "100%", height: 160, objectFit: "cover" }}
-                />
-              )}
+              {/* IMAGEN */}
+              <div className="w-full aspect-[16/9] bg-gray-100 overflow-hidden">
+                {b.cover_image ? (
+                  <img
+                    src={b.cover_image}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full text-xs text-gray-400">
+                    Sin imagen
+                  </div>
+                )}
+              </div>
 
-              <div style={{ padding: 12 }}>
+              {/* INFO */}
+              <div className="p-4 space-y-2">
 
-                <h2 style={{ fontSize: 18, fontWeight: 600 }}>
+                <div className="font-semibold">
                   {b.name}
-                </h2>
+                </div>
 
-                <p style={{ fontSize: 14, color: "#666" }}>
+                <div className="text-sm text-gray-500 line-clamp-2">
                   {b.description}
-                </p>
+                </div>
 
-                <div
-                  style={{
-                    marginTop: 6,
-                    fontSize: 12,
-                    background: "#eee",
-                    display: "inline-block",
-                    padding: "2px 6px",
-                    borderRadius: 4,
-                  }}
-                >
+                <div className="text-xs text-gray-400">
                   {b.type}
                 </div>
 
