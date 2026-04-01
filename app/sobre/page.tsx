@@ -54,10 +54,26 @@ export default function SobrePage() {
           Kume es para quienes buscan algo más que un lugar.
         </p>
 
-        <p>
-          Y para quienes crean espacios con intención,
-          y quieren compartirlos.
-        </p>
+        <div className="space-y-4 text-lg leading-relaxed">
+
+
+  <p>
+    Y para quienes crean espacios con intención,
+    y quieren compartirlos.
+  </p>
+
+  <p>
+    No importa si es un taller,
+    una barbería,
+    un espacio de arte
+    o un oficio de toda la vida.
+  </p>
+
+  <p>
+    Si hay una historia detrás,
+    hay lugar en Kume.
+  </p>
+</div>
       </div>
 
       {/* CIERRE */}

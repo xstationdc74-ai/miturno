@@ -29,45 +29,58 @@ export default function RootLayout({
 
         {/* 🔥 HEADER */}
         <header className="bg-white border-b">
-          <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-14">
+  <div className="max-w-6xl mx-auto flex items-center justify-between px-4 h-14">
 
-            {/* LOGO */}
-            <a href="/" className="flex items-center">
-              <img
-                src="/header-kume.png"
-                className="h-8 w-auto"
-                alt="Kume"
-              />
-            </a>
+    {/* LOGO */}
+    <a href="/" className="flex items-center">
+      <img
+        src="/header-kume.png"
+        className="h-10 md:h-8 w-auto"
+        alt="Kume"
+      />
+    </a>
 
-            {/* NAV */}
-            <div className="flex items-center gap-2 text-sm">
+    {/* NAV */}
+    <div className="flex items-center gap-2">
 
-              <a
-                href="/explorar"
-                className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
-              >
-                Explorar
-              </a>
+      {/* desktop */}
+      <div className="hidden md:flex items-center gap-2 text-sm">
 
-              <a
-                href="/sobre"
-                className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
-              >
-                Sobre Kume
-              </a>
+        <a
+          href="/explorar"
+          className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
+        >
+          Explorar
+        </a>
 
-              <a
-                href="/sumate"
-                className="bg-green-600 text-white px-4 py-2 rounded-lg"
-              >
-                Sumate a Kume
-              </a>
+        <a
+          href="/sobre"
+          className="px-3 py-1.5 rounded-lg hover:bg-gray-100"
+        >
+          Sobre
+        </a>
 
-            </div>
+        <a
+          href="/sumate"
+          className="bg-green-600 text-white px-4 py-2 rounded-lg"
+        >
+          Sumate a Kume
+        </a>
 
-          </div>
-        </header>
+      </div>
+
+      {/* mobile */}
+      <a
+        href="/sumate"
+        className="md:hidden bg-green-600 text-white px-3 py-1.5 rounded-lg text-sm"
+      >
+        Sumate
+      </a>
+
+    </div>
+
+  </div>
+</header>
 
         {/* CONTENIDO */}
         <main className="flex-1">
