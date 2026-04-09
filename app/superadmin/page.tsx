@@ -1,307 +1,329 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
+
+type Business = {
+  id: string
+  name: string
+  slug: string
+  features: any
+}
+
+type BusinessUser = {
+  id: string
+  user_id: string
+  role: string
+}
 
 export default function SuperAdminPage(){
 
-  const router = useRouter()
+  const [businesses,setBusinesses] = useState<Business[]>([])
+  const [selectedBusiness,setSelectedBusiness] = useState<Business | null>(null)
 
-  const [businessList,setBusinessList] = useState<any[]>([])
-  const [selectedBusinessId,setSelectedBusinessId] = useState<string | null>(null)
+  const [newName,setNewName] = useState("")
+  const [newSlug,setNewSlug] = useState("")
 
-  const [name,setName] = useState("")
-  const [slug,setSlug] = useState("")
-  const [type,setType] = useState("")
-
-  const [lat,setLat] = useState("")
-  const [lng,setLng] = useState("")
-
-  const [coverImage,setCoverImage] = useState("")
-
+  const [cta,setCta] = useState("booking")
+  const [hasGallery,setHasGallery] = useState(true)
   const [hasBooking,setHasBooking] = useState(true)
-  const [hasGallery,setHasGallery] = useState(false)
-  const [isActive,setIsActive] = useState(true)
 
-  const [gallerySections,setGallerySections] = useState<string[]>([])
+  const [userId,setUserId] = useState("")
+  const [role,setRole] = useState("admin")
+  const [users,setUsers] = useState<BusinessUser[]>([])
 
-  const [loading,setLoading] = useState(false)
-  const [uploading,setUploading] = useState(false)
+  const [message,setMessage] = useState("")
 
   useEffect(()=>{
-    const loadBusinesses = async () => {
-      const { data } = await supabase
-        .from("business")
-        .select("id,name")
-        .order("name",{ ascending:true })
-
-      setBusinessList(data || [])
-    }
-
     loadBusinesses()
   },[])
 
   useEffect(()=>{
-    if(!selectedBusinessId) {
-      resetForm()
+    if(selectedBusiness){
+      loadUsers(selectedBusiness.id)
+    }
+  },[selectedBusiness])
+
+  const loadBusinesses = async () => {
+    const { data } = await supabase
+      .from("business")
+      .select("*")
+
+    if(data){
+      setBusinesses(data)
+    }
+  }
+
+  const loadUsers = async (businessId:string) => {
+    const { data } = await supabase
+      .from("business_users")
+      .select("*")
+      .eq("business_id", businessId)
+
+    if(data){
+      setUsers(data)
+    }
+  }
+
+  const handleSelect = (id:string) => {
+    const biz = businesses.find(b => b.id === id)
+    if(!biz) return
+
+    setSelectedBusiness(biz)
+
+    const f = biz.features || {}
+
+    setCta(f.cta || "booking")
+    setHasGallery(!!f.gallery)
+    setHasBooking(!!f.booking)
+  }
+
+  // 🔥 CREAR NEGOCIO
+  const handleCreateBusiness = async () => {
+
+    const { error } = await supabase
+      .from("business")
+      .insert({
+        name: newName,
+        slug: newSlug,
+        is_active: true,
+        features: {
+          booking: ["home"],
+          gallery: ["home"],
+          _order: ["gallery","booking"],
+          cta: "booking"
+        }
+      })
+
+    if(error){
+      setMessage(error.message)
       return
     }
 
-    const load = async () => {
-      const { data } = await supabase
-        .from("business")
-        .select("*")
-        .eq("id", selectedBusinessId)
-        .single()
+    setMessage("Negocio creado 🚀")
+    setNewName("")
+    setNewSlug("")
 
-      if(!data) return
-
-      setName(data.name || "")
-      setSlug(data.slug || "")
-      setType(data.type || "")
-      setLat(data.lat?.toString() || "")
-      setLng(data.lng?.toString() || "")
-      setCoverImage(data.cover_image || "")
-      setHasBooking(data.has_booking)
-      setHasGallery(data.has_gallery)
-      setIsActive(data.is_active)
-      setGallerySections(data.gallery_sections || [])
-    }
-
-    load()
-  },[selectedBusinessId])
-
-  const resetForm = () => {
-    setName("")
-    setSlug("")
-    setType("")
-    setLat("")
-    setLng("")
-    setCoverImage("")
-    setHasBooking(true)
-    setHasGallery(false)
-    setIsActive(true)
-    setGallerySections([])
+    await loadBusinesses()
   }
 
-  const toggleSection = (section:string) => {
-    if(gallerySections.includes(section)){
-      setGallerySections(prev => prev.filter(s => s !== section))
-    }else{
-      setGallerySections(prev => [...prev, section])
+  // 🔥 FEATURES
+  const handleSaveFeatures = async () => {
+
+    if(!selectedBusiness) return
+
+    const features:any = {
+      _order: []
     }
-  }
 
-  // 🔥 UPLOAD IMAGE
-  const handleUpload = async (file: File) => {
+    if(hasGallery){
+      features.gallery = ["home"]
+      features._order.push("gallery")
+    }
 
-    if(!file) return
+    if(hasBooking){
+      features.booking = ["home"]
+      features._order.push("booking")
+    }
 
-    setUploading(true)
+    features.cta = cta
 
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Date.now()}.${fileExt}`
-    const filePath = `business/${fileName}`
-
-    const { error } = await supabase.storage
-      .from("business-images")
-      .upload(filePath, file)
+    const { error } = await supabase
+      .from("business")
+      .update({ features })
+      .eq("id", selectedBusiness.id)
 
     if(error){
-      console.error(error)
-      alert("Error subiendo imagen")
-      setUploading(false)
+      setMessage("Error guardando features")
       return
     }
 
-    const { data } = supabase.storage
-      .from("business-images")
-      .getPublicUrl(filePath)
+    setMessage("Features guardadas 🚀")
 
-    setCoverImage(data.publicUrl)
-
-    setUploading(false)
+    await loadBusinesses()
   }
 
-  const handleSave = async () => {
+  // 🔥 ASIGNAR
+  const handleAssign = async () => {
 
-    if(!name || !slug) return alert("Faltan datos")
-
-    setLoading(true)
-console.log("COVER IMAGE ANTES DE GUARDAR:", coverImage)
-console.log("ID QUE SE ESTÁ GUARDANDO:", selectedBusinessId)
-    const payload = {
-      name,
-      slug,
-      type,
-      lat: lat ? parseFloat(lat) : null,
-      lng: lng ? parseFloat(lng) : null,
-      cover_image: coverImage || null,
-      places: 1,
-      has_booking: hasBooking,
-      has_gallery: hasGallery,
-      is_active: isActive,
-      gallery_sections: gallerySections.length ? gallerySections : ['general']
-    }
-
-    let error = null
-
-    if(selectedBusinessId){
-      const res = await supabase
-  .from("business")
-  .update(payload)
-  .eq("id", selectedBusinessId)
-  .select()
-
-console.log("UPDATE RESPONSE:", res)
-
-error = res.error
-    }else{
-      const res = await supabase
-        .from("business")
-        .insert(payload)
-
-      error = res.error
-    }
-
-    setLoading(false)
+    const { error } = await supabase
+      .from("business_users")
+      .insert({
+        user_id: userId,
+        business_id: selectedBusiness?.id,
+        role: role
+      })
 
     if(error){
-      console.error(error)
-      return alert("Error al guardar")
+      setMessage("Error asignando")
+      return
     }
 
-    alert(selectedBusinessId ? "Negocio actualizado" : "Negocio creado")
-    resetForm()
-    setSelectedBusinessId(null)
+    setMessage("Usuario asignado")
+    setUserId("")
+
+    if(selectedBusiness){
+      await loadUsers(selectedBusiness.id)
+    }
   }
 
-  return(
+  // 🔥 ELIMINAR
+  const handleRemove = async (id:string) => {
 
-    <div className="max-w-xl mx-auto p-6 space-y-6">
+    await supabase
+      .from("business_users")
+      .delete()
+      .eq("id", id)
 
-      <select
-        value={selectedBusinessId || ""}
-        onChange={(e)=>{
-          const val = e.target.value
-          setSelectedBusinessId(val || null)
-        }}
-        className="w-full h-10 px-3 rounded-lg border text-sm bg-white"
-      >
-        <option value="">
-          ➕ Crear nuevo negocio
-        </option>
+    if(selectedBusiness){
+      await loadUsers(selectedBusiness.id)
+    }
+  }
 
-        {businessList.map(b=>(
-          <option key={b.id} value={b.id}>
-            {b.name}
-          </option>
-        ))}
-      </select>
+  return (
+    <div className="p-10 space-y-8 max-w-xl">
 
-      <h1 className="text-xl font-semibold">
-        SuperAdmin — {selectedBusinessId ? "Editar negocio" : "Crear negocio"}
-      </h1>
+      <h1 className="text-2xl font-bold">Superadmin</h1>
 
-      <input
-        placeholder="Nombre"
-        value={name}
-        onChange={e=>setName(e.target.value)}
-        className="w-full h-10 px-3 rounded-lg border text-sm"
-      />
+      {/* 🔥 CREAR NEGOCIO */}
+      <div className="border p-4 space-y-3">
+        <h2 className="font-semibold">Crear negocio</h2>
 
-      <input
-        placeholder="Slug"
-        value={slug}
-        onChange={e=>setSlug(e.target.value)}
-        className="w-full h-10 px-3 rounded-lg border text-sm"
-      />
-
-      <input
-        placeholder="Tipo"
-        value={type}
-        onChange={e=>setType(e.target.value)}
-        className="w-full h-10 px-3 rounded-lg border text-sm"
-      />
-
-      <div className="grid grid-cols-2 gap-2">
         <input
-          placeholder="Lat"
-          value={lat}
-          onChange={e=>setLat(e.target.value)}
-          className="w-full h-10 px-3 rounded-lg border text-sm"
+          placeholder="Nombre"
+          value={newName}
+          onChange={(e)=>setNewName(e.target.value)}
+          className="w-full border p-2"
         />
+
         <input
-          placeholder="Lng"
-          value={lng}
-          onChange={e=>setLng(e.target.value)}
-          className="w-full h-10 px-3 rounded-lg border text-sm"
+          placeholder="Slug"
+          value={newSlug}
+          onChange={(e)=>setNewSlug(e.target.value)}
+          className="w-full border p-2"
         />
+
+        <button
+          onClick={handleCreateBusiness}
+          className="bg-black text-white px-4 py-2"
+        >
+          Crear
+        </button>
       </div>
 
-      {/* 🔥 UPLOAD */}
-      <div className="space-y-2">
+      {/* SELECT NEGOCIO */}
+      <div>
+        <label>Negocio</label>
+        <select
+          onChange={(e)=>handleSelect(e.target.value)}
+          className="w-full border p-2"
+        >
+          <option value="">Seleccionar</option>
+          {businesses.map(b=>(
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+      </div>
 
-        <label className="w-full h-11 bg-green-600 text-white rounded-lg text-sm flex items-center justify-center cursor-pointer">
-  {uploading ? "Subiendo..." : "Seleccionar imagen"}
+      {/* FEATURES */}
+      {selectedBusiness && (
+        <div className="border p-4 space-y-4">
 
-  <input
-    type="file"
-    accept="image/*"
-    className="hidden"
-    onChange={(e)=>{
-      if(e.target.files?.[0]){
-        handleUpload(e.target.files[0])
-      }
-    }}
-  />
-</label>
+          <h2 className="font-semibold">
+            Features
+          </h2>
 
-        {uploading && (
-          <div className="text-sm text-gray-500">
-            Subiendo imagen...
-          </div>
-        )}
+          <select
+            value={cta}
+            onChange={(e)=>setCta(e.target.value)}
+            className="w-full border p-2"
+          >
+            <option value="booking">Reservar</option>
+            <option value="visit">Visitar</option>
+          </select>
 
-        {coverImage && (
-          <img
-            src={coverImage}
-            className="w-full h-40 object-cover rounded-lg border"
+          <label className="flex gap-2">
+            <input
+              type="checkbox"
+              checked={hasGallery}
+              onChange={()=>setHasGallery(!hasGallery)}
+            />
+            Gallery
+          </label>
+
+          <label className="flex gap-2">
+            <input
+              type="checkbox"
+              checked={hasBooking}
+              onChange={()=>setHasBooking(!hasBooking)}
+            />
+            Booking
+          </label>
+
+          <button
+            onClick={handleSaveFeatures}
+            className="bg-black text-white px-4 py-2"
+          >
+            Guardar features
+          </button>
+
+        </div>
+      )}
+
+      {/* USERS */}
+      {selectedBusiness && (
+        <div className="border p-4 space-y-4">
+
+          <h2 className="font-semibold">Usuarios</h2>
+
+          <input
+            placeholder="User ID"
+            value={userId}
+            onChange={(e)=>setUserId(e.target.value)}
+            className="w-full border p-2"
           />
-        )}
 
-      </div>
+          <select
+            value={role}
+            onChange={(e)=>setRole(e.target.value)}
+            className="w-full border p-2"
+          >
+            <option value="admin">Admin</option>
+            <option value="staff">Staff</option>
+          </select>
 
-      <div className="space-y-2 text-sm">
+          <button
+            onClick={handleAssign}
+            className="bg-black text-white px-4 py-2"
+          >
+            Asignar
+          </button>
 
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={hasBooking} onChange={()=>setHasBooking(!hasBooking)} />
-          Tiene reservas
-        </label>
+          {users.map(u=>(
+            <div key={u.id} className="flex justify-between border p-2">
+              <div>
+                <p className="text-sm">{u.user_id}</p>
+                <p className="text-xs text-gray-500">{u.role}</p>
+              </div>
 
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={hasGallery} onChange={()=>setHasGallery(!hasGallery)} />
-          Tiene galería
-        </label>
+              <button
+                onClick={()=>handleRemove(u.id)}
+                className="text-red-500"
+              >
+                Eliminar
+              </button>
+            </div>
+          ))}
 
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={isActive} onChange={()=>setIsActive(!isActive)} />
-          Activo
-        </label>
+        </div>
+      )}
 
-      </div>
-
-      <button
-        onClick={handleSave}
-        disabled={loading}
-        className="w-full h-11 bg-green-600 text-white rounded-lg text-sm"
-      >
-        {loading ? "Guardando..." : selectedBusinessId ? "Guardar cambios" : "Crear negocio"}
-      </button>
+      {message && (
+        <p className="text-sm">{message}</p>
+      )}
 
     </div>
-
   )
-
 }

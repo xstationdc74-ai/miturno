@@ -5,7 +5,7 @@ import { useEffect } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 
-// 🔥 FIX DEFINITIVO ICONOS (VERCEL)
+// 🔥 FIX ICONOS
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
 L.Icon.Default.mergeOptions({
@@ -22,28 +22,23 @@ type Business = {
   cover_image?: string
   type?: string
   description?: string
+  features?: any
 }
 
 function LocateUser() {
-
   const map = useMap()
 
   useEffect(() => {
-
     if (!navigator.geolocation) return
 
     navigator.geolocation.getCurrentPosition(
-
       (pos) => {
         map.setView([pos.coords.latitude, pos.coords.longitude], 15)
       },
-
       () => {
         map.setView([-40.7612, -71.6463], 15)
       }
-
     )
-
   }, [map])
 
   return null
@@ -56,7 +51,6 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
   )
 
   return (
-
     <MapContainer
       center={[-40.7612, -71.6463]}
       zoom={15}
@@ -67,71 +61,71 @@ export default function BusinessMap({ businesses }: { businesses: Business[] }) 
 
       <LocateUser />
 
-      {validBusinesses.map((b) => (
+      {validBusinesses.map((b) => {
 
-        <Marker
-          key={b.slug}
-          position={[b.lat as number, b.lng as number]}
-        >
+        // 💣 CTA SOLO PARA UX (NO ROMPE FEATURES)
+        const isVisit = b.features?.cta === "visit"
 
-          <Popup>
+        return (
+          <Marker
+            key={b.slug}
+            position={[b.lat as number, b.lng as number]}
+          >
 
-            <div className="w-[220px]">
+            <Popup>
 
-              {/* IMAGEN */}
-              <div className="w-full h-28 bg-gray-100 rounded-lg overflow-hidden mb-2">
+              <div className="w-[220px]">
 
-  {b.cover_image ? (
-    <img
-      src={b.cover_image}
-      className="w-full h-full object-cover"
-    />
-                ) : (
-                  <div className="text-xs text-gray-400">
-                    Sin imagen
-                  </div>
-                )}
-
-              </div>
-
-              <div className="space-y-1">
-
-                <div className="text-sm font-semibold">
-                  {b.name}
+                <div className="w-full h-28 bg-gray-100 rounded-lg overflow-hidden mb-2">
+                  {b.cover_image ? (
+                    <img
+                      src={b.cover_image}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="text-xs text-gray-400">
+                      Sin imagen
+                    </div>
+                  )}
                 </div>
 
-                {b.type && (
-                  <div className="text-xs text-gray-500">
-                    {b.type}
-                  </div>
-                )}
+                <div className="space-y-1">
 
-                {b.description && (
-                  <div className="text-xs text-gray-500">
-                    {b.description}
+                  <div className="text-sm font-semibold">
+                    {b.name}
                   </div>
-                )}
+
+                  {b.type && (
+                    <div className="text-xs text-gray-500">
+                      {b.type}
+                    </div>
+                  )}
+
+                  {b.description && (
+                    <div className="text-xs text-gray-500">
+                      {b.description}
+                    </div>
+                  )}
+
+                </div>
+
+                {/* 💣 CTA independiente de features */}
+                <a
+                  href={isVisit ? `/residencias/${b.slug}` : `/book/${b.slug}`}
+                  style={{ color: "#fff", textDecoration: "none" }}
+                  className="block mt-3 text-center bg-green-600 text-sm py-2 rounded-lg"
+                >
+                  {isVisit ? "Visitar" : "Reservar"}
+                </a>
 
               </div>
 
-              <a
-                href={`/book/${b.slug}`}
-                style={{ color: "#fff", textDecoration: "none" }}
-                className="block mt-3 text-center bg-green-600 text-sm py-2 rounded-lg"
-              >
-                Reservar
-              </a>
+            </Popup>
 
-            </div>
-
-          </Popup>
-
-        </Marker>
-
-      ))}
+          </Marker>
+        )
+      })}
 
     </MapContainer>
-
   )
-
 }

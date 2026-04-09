@@ -2,42 +2,49 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import CashSummary from "@/components/CashSummary"
-import Link from "next/link"
-import GallerySection from "@/components/GallerySection"
-import HeroUpload from "@/components/HeroUpload"
-import EventSection from "@/components/EventSection"
-
-type Appointment = {
-  id: string
-  client_name: string
-  client_phone: string
-  status: string
-}
+import OnaSplash from "@/components/OnaSplash"
 
 type Business = {
   id: string
   name: string
-  slug: string
-  has_gallery: boolean
-  type: string
-  hero_text?: string
-  hero_image?: string
 }
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }>
-}) {
+type Staff = {
+  user_id: string
+  email: string
+}
+
+type Task = {
+  id: string
+  title: string
+  description: string
+  type: string
+}
+
+type Assignment = {
+  id: string
+  task_id: string
+  user_id: string
+  status: string
+  comment: string | null
+}
+
+export default function Page({ params }: { params: Promise<{ slug: string }> }) {
 
   const [slug,setSlug] = useState<string | null>(null)
   const [biz,setBiz] = useState<Business | null>(null)
-  const [appointments,setAppointments] = useState<Appointment[]>([])
 
-  const [heroText,setHeroText] = useState("")
-  const [heroImage,setHeroImage] = useState("")
-  const [saving,setSaving] = useState(false)
+  const [tasks,setTasks] = useState<Task[]>([])
+  const [staff,setStaff] = useState<Staff[]>([])
+  const [assignments,setAssignments] = useState<Assignment[]>([])
+
+  const [taskTitle,setTaskTitle] = useState("")
+  const [taskDesc,setTaskDesc] = useState("")
+  const [taskType,setTaskType] = useState("common")
+  const [selectedUsers,setSelectedUsers] = useState<string[]>([""])
+
+  // 🔥 splash
+  const [showSplash,setShowSplash] = useState(true)
 
   useEffect(()=>{
     const loadParams = async () => {
@@ -63,47 +70,124 @@ export default function Page({
     if(!bizData) return
 
     setBiz(bizData)
-    setHeroText(bizData.hero_text || "")
-    setHeroImage(bizData.hero_image || "")
 
-    const { data: appData } = await supabase
-      .from("appointments")
+    const { data: tasksData } = await supabase
+      .from("tasks")
       .select("*")
       .eq("business_id", bizData.id)
       .order("created_at", { ascending: false })
 
-    setAppointments(appData || [])
+    setTasks(tasksData || [])
+
+    const { data: assignmentsData } = await supabase
+      .from("task_assignments")
+      .select("*")
+      .eq("business_id", bizData.id)
+
+    setAssignments(assignmentsData || [])
+
+    const { data: relations } = await supabase
+      .from("business_users")
+      .select("user_id")
+      .eq("business_id", bizData.id)
+      .eq("role", "staff")
+
+    if (relations) {
+      const ids = relations.map(r => r.user_id)
+
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id,email")
+        .in("id", ids)
+
+      setStaff((profiles || []).map(p => ({
+        user_id: p.id,
+        email: p.email
+      })))
+    }
   }
 
-  const saveHero = async () => {
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    window.location.href = "/login"
+  }
+
+  const handleSelectChange = (index:number, value:string) => {
+    const updated = [...selectedUsers]
+    updated[index] = value
+    setSelectedUsers(updated)
+  }
+
+  const addSelect = () => {
+    setSelectedUsers(prev => [...prev, ""])
+  }
+
+  const createTask = async () => {
 
     if(!biz) return
+    if(!taskTitle) {
+      alert("Falta título")
+      return
+    }
 
-    setSaving(true)
-
-    await supabase
-      .from("business")
-      .update({
-        hero_text: heroText,
-        hero_image: heroImage
+    const { data: newTask } = await supabase
+      .from("tasks")
+      .insert({
+        business_id: biz.id,
+        title: taskTitle,
+        description: taskDesc,
+        type: taskType
       })
-      .eq("id", biz.id)
+      .select()
+      .single()
 
-    setSaving(false)
+    if (!newTask) return
+
+    for (const userId of selectedUsers) {
+      if (!userId) continue
+
+      await supabase
+        .from("task_assignments")
+        .insert({
+          task_id: newTask.id,
+          user_id: userId,
+          business_id: biz.id,
+          status: "pending"
+        })
+    }
+
+    setTaskTitle("")
+    setTaskDesc("")
+    setTaskType("common")
+    setSelectedUsers([""])
+
+    await loadData()
   }
 
-  const updateStatus = async (id:string, status:string) => {
+  const deleteTask = async (taskId:string) => {
 
-    await supabase
-      .from("appointments")
-      .update({ status })
-      .eq("id", id)
+    if (!confirm("Eliminar tarea?")) return
 
-    setAppointments(prev =>
-      prev.map(a =>
-        a.id === id ? { ...a, status } : a
-      )
-    )
+    await supabase.from("task_assignments").delete().eq("task_id", taskId)
+    await supabase.from("tasks").delete().eq("id", taskId)
+
+    loadData()
+  }
+
+  const getStatusColor = (status:string) => {
+    if (status === "completed") return "text-green-600"
+    if (status === "accepted") return "text-blue-600"
+    if (status === "rejected") return "text-red-600"
+    return "text-yellow-500"
+  }
+
+  const getUserEmail = (userId:string) => {
+    return staff.find(s => s.user_id === userId)?.email || "usuario"
+  }
+
+  // 🔥 SPLASH FIRST
+  if(showSplash){
+    return <OnaSplash onFinish={()=>setShowSplash(false)} />
   }
 
   if (!biz) return <div className="p-10">Cargando...</div>
@@ -111,141 +195,128 @@ export default function Page({
   return (
     <div className="max-w-3xl mx-auto p-6 space-y-6">
 
-      <h1 className="text-2xl font-semibold">
-        {biz.name}
-      </h1>
+      {/* HEADER */}
+      <div className="flex justify-between items-center">
 
-      {/* HERO */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h2 className="text-sm font-semibold">
-          Contenido principal
-        </h2>
-
-        <HeroUpload
-          businessId={biz.id}
-          onUpload={(url)=>setHeroImage(url)}
-        />
-
-        {heroImage && (
-          <div className="w-full h-48 overflow-hidden rounded-lg">
-            <img
-              src={heroImage}
-              className="w-full h-full object-cover object-center"
-            />
-          </div>
-        )}
-
-        <textarea
-          placeholder="Texto principal"
-          value={heroText}
-          onChange={e=>setHeroText(e.target.value)}
-          className="w-full p-3 rounded-lg border text-sm"
-          rows={4}
-        />
+        <div className="flex items-center gap-2">
+          <img src="/ona-icon.png" className="w-8 h-8" />
+          <span className="text-lg font-medium">
+            Admin
+          </span>
+        </div>
 
         <button
-          onClick={saveHero}
-          className="w-full bg-green-600 text-white py-2 rounded-lg text-sm"
+          onClick={handleLogout}
+          className="bg-green-600 text-white px-3 py-1 rounded"
         >
-          {saving ? "Guardando..." : "Guardar"}
+          Logout
         </button>
-
       </div>
 
-      {/* 🔥 GALERÍAS DINAMICAS */}
-     
-   <div className="space-y-4">
+      {/* CREAR */}
+      <div className="bg-white p-4 rounded-xl border space-y-4">
 
-  {Array.from({ length: (biz as any).gallery_count || 1 }).map((_,i) => {
+        <h2 className="text-sm font-semibold">Crear tarea</h2>
 
-    const section = `gallery_${i+1}`
+        <input
+          placeholder="Título"
+          value={taskTitle}
+          onChange={e=>setTaskTitle(e.target.value)}
+          className="w-full border px-3 py-2 rounded-lg text-sm"
+        />
 
-    return (
-      <GallerySection
-        key={section}
-        businessId={biz.id}
-        section={section}
-        index={i}
-        currentName={(biz as any).gallery_names?.[i]}
-        currentPage={(biz as any).gallery_pages?.[i]}
-        allPages={(biz as any).gallery_pages || []}
-        onChange={loadData} // 💥 refresh real
-      />
-    )
+        <textarea
+          placeholder="Descripción"
+          value={taskDesc}
+          onChange={e=>setTaskDesc(e.target.value)}
+          className="w-full border px-3 py-2 rounded-lg text-sm"
+        />
 
-  })}
+        <select
+          value={taskType}
+          onChange={e=>setTaskType(e.target.value)}
+          className="w-full border px-3 py-2 rounded-lg text-sm"
+        >
+          <option value="common">Espacios comunes</option>
+          <option value="daily">Servicio diario</option>
+          <option value="checkout">Check-out</option>
+        </select>
 
- {/* 🔥 EVENTOS SOLO PARA RESIDENCIAS */}
-{biz.type === "residencia" && (
-  <div className="bg-white p-4 rounded-xl border space-y-3">
-
-    <h2 className="text-sm font-semibold">
-      Eventos / Residencias
-    </h2>
-
-    <EventSection businessId={biz.id} />
-
-  </div>
-)}
-
-</div>
-
-      {/* RESERVAS */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h2 className="text-sm font-semibold">
-          Reservas
-        </h2>
-
-        {appointments.length === 0 && (
-          <div className="text-xs text-gray-400">
-            Sin reservas
-          </div>
-        )}
-
-        {appointments.map(a => (
-          <div
-            key={a.id}
-            className="border rounded-lg p-3 space-y-2 text-sm"
+        {selectedUsers.map((user, index) => (
+          <select
+            key={index}
+            value={user}
+            onChange={(e)=>handleSelectChange(index, e.target.value)}
+            className="w-full border px-3 py-2 rounded-lg text-sm"
           >
-
-            <div className="font-medium">
-              {a.client_name}
-            </div>
-
-            <div className="text-xs text-gray-500">
-              {a.client_phone}
-            </div>
-
-            <div className="text-xs">
-              Estado: {a.status}
-            </div>
-
-            <div className="flex gap-2">
-
-              <button
-                onClick={()=>updateStatus(a.id,"accepted")}
-                className="px-3 py-1 text-xs bg-green-600 text-white rounded"
-              >
-                Aceptar
-              </button>
-
-              <button
-                onClick={()=>updateStatus(a.id,"rejected")}
-                className="px-3 py-1 text-xs bg-red-600 text-white rounded"
-              >
-                Rechazar
-              </button>
-
-            </div>
-
-          </div>
+            <option value="">Seleccionar mucama</option>
+            {staff.map(s => (
+              <option key={s.user_id} value={s.user_id}>
+                {s.email}
+              </option>
+            ))}
+          </select>
         ))}
 
+        <button onClick={addSelect} className="text-xs text-blue-600">
+          + Agregar otra mucama
+        </button>
+
+        <button
+          onClick={createTask}
+          className="w-full bg-blue-600 text-white py-2 rounded-lg text-sm"
+        >
+          Crear tarea
+        </button>
       </div>
 
-      <CashSummary businessId={biz.id} />
+      {/* LISTA */}
+      <div className="space-y-3">
+
+        {tasks.map(t => {
+
+          const taskAssignments = assignments.filter(a => a.task_id === t.id)
+
+          return (
+            <div key={t.id} className="border rounded-xl p-4 space-y-2">
+
+              <div className="font-medium">{t.title}</div>
+              <div className="text-sm text-gray-500">{t.description}</div>
+
+              {taskAssignments.map(a => (
+                <div key={a.id} className="text-xs">
+
+                  <span className="font-medium">
+                    {getUserEmail(a.user_id)}
+                  </span>
+
+                  {" - "}
+
+                  <span className={getStatusColor(a.status)}>
+                    {a.status}
+                  </span>
+
+                  {a.comment && (
+                    <div className="text-gray-500">
+                      💬 {a.comment}
+                    </div>
+                  )}
+
+                </div>
+              ))}
+
+              <button
+                onClick={()=>deleteTask(t.id)}
+                className="text-xs text-red-600"
+              >
+                Eliminar
+              </button>
+
+            </div>
+          )
+        })}
+
+      </div>
 
     </div>
   )

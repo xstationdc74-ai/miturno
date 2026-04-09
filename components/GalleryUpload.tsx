@@ -1,4 +1,4 @@
-'use client'
+"use client"
 
 import { supabase } from "@/lib/supabase/client"
 import { useState } from "react"
@@ -22,6 +22,35 @@ export default function GalleryUpload({
 
     setLoading(true)
 
+    // 🔥 1. TRAER LIMIT
+    const { data: biz } = await supabase
+      .from("business")
+      .select("gallery_limit")
+      .eq("id", businessId)
+      .single()
+
+    const limit = biz?.gallery_limit || 1
+
+    // 🔥 2. CONTAR SECCIONES USADAS
+    const { data: sections } = await supabase
+      .from("gallery")
+      .select("section")
+      .eq("business_id", businessId)
+
+    const uniqueSections = Array.from(
+      new Set((sections || []).map(s => s.section))
+    )
+
+    // 🔥 3. VALIDAR LIMITE
+    const isNewSection = !uniqueSections.includes(section)
+
+    if(isNewSection && uniqueSections.length >= limit){
+      alert(`Límite de galerías alcanzado (${limit})`)
+      setLoading(false)
+      return
+    }
+
+    // 🔥 SUBIDA NORMAL
     const fileName = `${Date.now()}-${file.name}`
 
     const { error } = await supabase.storage

@@ -33,20 +33,20 @@ export default function Page() {
     setBusinesses(data || [])
   }
 
-  const getCTA = (b: Business) => {
-    if(b.type === "c421"){
-      return {
-        label: "Visitar",
-        href: `/residencias/${b.slug}`
-      }
-    }
-
+ const getCTA = (b: any) => {
+  if (b.cta === "visit") {
     return {
-      label: "Reservar",
-      href: `/book/${b.slug}`
+      label: "Visitar",
+      href: `/residencias/${b.slug}`
     }
   }
 
+  return {
+    label: "Reservar",
+    href: `/book/${b.slug}`
+  }
+}
+console.log("SELECTED:", selected)
   return (
     <div className="w-full h-screen relative">
 
@@ -56,7 +56,10 @@ export default function Page() {
         {businesses.map(b => (
           <div
             key={b.id}
-            onClick={()=>setSelected(b)}
+            onClick={()=>{
+  console.log("CLICK BUSINESS:", b)
+  setSelected(b)
+}}
             className="absolute cursor-pointer"
             style={{
               top: `${50 + b.lat}%`,
@@ -90,7 +93,7 @@ export default function Page() {
           ) : (
             <>
               {selected.cover_image && (
-  <div className="w-full aspect-[16/9] overflow-hidden rounded-lg">
+ <div className="w-full aspect-video overflow-hidden rounded-lg">
     <img
       src={selected.cover_image}
       className="w-full h-full object-cover"
