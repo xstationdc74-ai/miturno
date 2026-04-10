@@ -27,16 +27,6 @@ type Assignment = {
   user_id: string
   status: string
   comment: string | null
-  started_at?: string
-  completed_at?: string
-}
-
-type Report = {
-  id: string
-  message: string
-  user_id: string
-  task_id: string
-  created_at: string
 }
 
 export default function Page({ params }: { params: Promise<{ slug: string }> }) {
@@ -47,13 +37,13 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
   const [tasks,setTasks] = useState<Task[]>([])
   const [staff,setStaff] = useState<Staff[]>([])
   const [assignments,setAssignments] = useState<Assignment[]>([])
-  const [reports,setReports] = useState<Report[]>([]) // 🔥 NUEVO
 
   const [taskTitle,setTaskTitle] = useState("")
   const [taskDesc,setTaskDesc] = useState("")
   const [taskType,setTaskType] = useState("common")
   const [selectedUsers,setSelectedUsers] = useState<string[]>([""])
 
+  // 🔥 splash
   const [showSplash,setShowSplash] = useState(true)
 
   useEffect(()=>{
@@ -66,15 +56,7 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
   useEffect(()=>{
     if(!slug) return
-
     loadData()
-
-    const interval = setInterval(() => {
-      loadData()
-    }, 5000)
-
-    return () => clearInterval(interval)
-
   },[slug])
 
   const loadData = async () => {
@@ -103,15 +85,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
       .eq("business_id", bizData.id)
 
     setAssignments(assignmentsData || [])
-
-    // 🔥 NUEVO: REPORTES
-    const { data: reportsData } = await supabase
-      .from("maintenance_reports")
-      .select("*")
-      .eq("business_id", bizData.id)
-      .order("created_at", { ascending: false })
-
-    setReports(reportsData || [])
 
     const { data: relations } = await supabase
       .from("business_users")
@@ -212,25 +185,7 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     return staff.find(s => s.user_id === userId)?.email || "usuario"
   }
 
-  const getDuration = (start:string, end?:string) => {
-    if (!start) return null
-
-    const startDate = new Date(start + "Z")
-    const endDate = end ? new Date(end + "Z") : new Date()
-
-    const diffMs = endDate.getTime() - startDate.getTime()
-
-    return Math.max(0, Math.floor(diffMs / 60000))
-  }
-
-  const getStats = (userId:string) => {
-    const userAssignments = assignments.filter(a => a.user_id === userId)
-    const total = userAssignments.length
-    const completed = userAssignments.filter(a => a.status === "completed").length
-    const active = userAssignments.some(a => a.status === "accepted")
-    return { total, completed, active }
-  }
-
+  // 🔥 SPLASH FIRST
   if(showSplash){
     return <OnaSplash onFinish={()=>setShowSplash(false)} />
   }
@@ -242,9 +197,12 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
       {/* HEADER */}
       <div className="flex justify-between items-center">
+
         <div className="flex items-center gap-2">
           <img src="/ona-icon.png" className="w-8 h-8" />
-          <span className="text-lg font-medium">Admin</span>
+          <span className="text-lg font-medium">
+            Admin
+          </span>
         </div>
 
         <button
@@ -253,100 +211,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
         >
           Logout
         </button>
-      </div>
-
-      {/* DASHBOARD */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h2 className="text-sm font-semibold">Equipo</h2>
-
-        {staff.map(s => {
-
-          const stats = getStats(s.user_id)
-
-          const activeTask = assignments
-            .filter(a => a.user_id === s.user_id && a.status === "accepted")
-            .sort((a,b) => new Date(b.started_at || "").getTime() - new Date(a.started_at || "").getTime())[0]
-
-          return (
-            <div key={s.user_id} className="flex justify-between items-center border-b pb-2">
-
-              <div>
-                <div className="text-sm font-medium">{s.email}</div>
-                <div className="text-xs text-gray-500">
-                  {stats.completed} / {stats.total} tareas
-                </div>
-              </div>
-
-              <div className="text-xs flex flex-col items-end">
-
-                {stats.active ? (
-                  <>
-                    <div className="flex items-center gap-1">
-                      <span className="text-green-600">🟢</span>
-                      <span className="text-gray-600">En curso</span>
-                    </div>
-
-                    {activeTask?.started_at && (
-                      <>
-                        <div className="text-gray-400">
-                          ⏱ {getDuration(activeTask.started_at)} min
-                        </div>
-
-                        <div className="text-gray-400 text-[11px]">
-                          {tasks.find(t => t.id === activeTask.task_id)?.title}
-                        </div>
-                      </>
-                    )}
-                  </>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <span className="text-gray-400">⚪</span>
-                    <span className="text-gray-400">Sin actividad</span>
-                  </div>
-                )}
-
-              </div>
-
-            </div>
-          )
-        })}
-
-      </div>
-
-      {/* 🛠 REPORTES */}
-      <div className="bg-white p-4 rounded-xl border space-y-3">
-
-        <h2 className="text-sm font-semibold">🛠 Reportes de mantenimiento</h2>
-
-        {reports.length === 0 && (
-          <div className="text-xs text-gray-400">
-            Sin reportes
-          </div>
-        )}
-
-        {reports.map(r => (
-          <div key={r.id} className="border rounded-lg p-3 text-sm">
-
-            <div className="font-medium">
-              {getUserEmail(r.user_id)}
-            </div>
-
-            <div className="text-gray-600">
-              {tasks.find(t => t.id === r.task_id)?.title || "Tarea"}
-            </div>
-
-            <div className="text-gray-500 text-xs">
-              {new Date(r.created_at + "Z").toLocaleString("es-AR")}
-            </div>
-
-            <div className="mt-1">
-              💬 {r.message}
-            </div>
-
-          </div>
-        ))}
-
       </div>
 
       {/* CREAR */}
@@ -435,12 +299,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
                   {a.comment && (
                     <div className="text-gray-500">
                       💬 {a.comment}
-                    </div>
-                  )}
-
-                  {a.started_at && a.completed_at && (
-                    <div className="text-gray-400">
-                      ⏱ {getDuration(a.started_at, a.completed_at)} min
                     </div>
                   )}
 

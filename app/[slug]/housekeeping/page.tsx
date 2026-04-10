@@ -25,7 +25,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
   const [user,setUser] = useState<any>(null)
   const [businessId,setBusinessId] = useState<string | null>(null)
 
-  // 🔥 splash
   const [showSplash,setShowSplash] = useState(true)
 
   useEffect(()=>{
@@ -59,21 +58,29 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
       .select("*")
       .eq("user_id", userId)
       .eq("business_id", businessId)
-      .neq("status","completed")
 
-    if (!assignments || assignments.length === 0) {
+    if (!assignments) {
       setTasks([])
       return
     }
 
-    const taskIds = assignments.map(a => a.task_id)
+    const activeAssignments = assignments.filter(
+      a => a.status === "pending" || a.status === "accepted"
+    )
+
+    if (activeAssignments.length === 0) {
+      setTasks([])
+      return
+    }
+
+    const taskIds = activeAssignments.map(a => a.task_id)
 
     const { data: tasksData } = await supabase
       .from("tasks")
       .select("*")
       .in("id", taskIds)
 
-    const merged = assignments.map(a => ({
+    const merged = activeAssignments.map(a => ({
       ...a,
       task: tasksData?.find(t => t.id === a.task_id)
     }))
@@ -81,7 +88,21 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     setTasks(merged)
   }
 
+  // 🔥 SOLO UNA TAREA ACTIVA
   const acceptTask = async (id:string) => {
+
+    const { data: activeTasks } = await supabase
+      .from("task_assignments")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("business_id", businessId)
+      .eq("status", "accepted")
+
+    if (activeTasks && activeTasks.length > 0) {
+      alert("Ya tenés una tarea en curso")
+      return
+    }
+
     await supabase
       .from("task_assignments")
       .update({
@@ -109,12 +130,30 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     loadTasks(user.id, businessId!)
   }
 
+  // 🔥 NUEVO: REPORTAR PROBLEMA
+  const reportIssue = async (taskId:string) => {
+
+    const message = prompt("Describí el problema") || ""
+
+    if (!message) return
+
+    await supabase
+      .from("maintenance_reports")
+      .insert({
+        business_id: businessId,
+        user_id: user.id,
+        task_id: taskId,
+        message
+      })
+
+    alert("Reporte enviado ✔")
+  }
+
   const handleLogout = async () => {
     await supabase.auth.signOut()
     window.location.href = "/login"
   }
 
-  // 🔥 SPLASH FIRST
   if(showSplash){
     return <OnaSplash onFinish={()=>setShowSplash(false)} />
   }
@@ -122,22 +161,13 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-4">
 
-      {/* HEADER */}
       <div className="flex justify-between items-center">
 
-        {/* 🔥 LOGO + TITLE */}
         <div className="flex items-center gap-2">
-
-          <img
-            src="/ona-icon.png"
-            alt="ONA"
-            className="w-8 h-8"
-          />
-
+          <img src="/ona-icon.png" alt="ONA" className="w-8 h-8" />
           <span className="text-lg font-medium">
             Housekeeping
           </span>
-
         </div>
 
         <button
@@ -165,7 +195,7 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
             {t.task?.description}
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
 
             {t.status === "pending" && (
               <button
@@ -184,6 +214,14 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
                 Finalizar
               </button>
             )}
+
+            {/* 🔥 NUEVO BOTÓN */}
+            <button
+              onClick={()=>reportIssue(t.task_id)}
+              className="bg-red-500 text-white px-2 py-1 text-xs rounded"
+            >
+              Reportar
+            </button>
 
           </div>
 

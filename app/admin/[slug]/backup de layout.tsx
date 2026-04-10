@@ -78,22 +78,6 @@ export default function AdminLayout({
 
   return (
     <div>
-
-      {/* LOGOUT */}
-      <div className="p-4 flex justify-end">
-        <button
-          onClick={async () => {
-            await supabase.auth.signOut()
-            sessionStorage.clear()
-            localStorage.clear()
-            window.location.href = "/login"
-          }}
-          className="text-sm bg-black text-white px-3 py-1 rounded"
-        >
-          Logout
-        </button>
-      </div>
-
       {children}
     </div>
   )
