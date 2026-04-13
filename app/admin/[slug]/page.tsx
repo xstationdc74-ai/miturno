@@ -60,6 +60,8 @@ type Product = {
 const [products,setProducts] = useState<Product[]>([])
 const [newProductName,setNewProductName] = useState("")
 const [newProductStock,setNewProductStock] = useState("")
+// 🔥 NUEVO: logs de consumo
+const [stockLogs,setStockLogs] = useState<any[]>([])
 
 
   const [taskTitle,setTaskTitle] = useState("")
@@ -133,6 +135,14 @@ const { data: prodData } = await supabase
   .eq("business_id", bizData.id)
 
 setProducts(prodData || [])
+
+// 🔥 NUEVO: traer logs de stock
+const { data: logsData } = await supabase
+  .from("task_stock_logs")
+  .select("*")
+  .eq("business_id", bizData.id)
+
+setStockLogs(logsData || [])
 
     const { data: relations } = await supabase
       .from("business_users")
@@ -250,6 +260,10 @@ const deleteTask = async (taskId:string) => {
   const getUserEmail = (userId:string) => {
     return staff.find(s => s.user_id === userId)?.email || "usuario"
   }
+
+const getProductName = (productId:string) => {
+  return products.find(p => p.id === productId)?.name || "producto"
+}
 
   const getDuration = (start:string, end?:string) => {
     if (!start) return null
@@ -453,6 +467,23 @@ const deleteTask = async (taskId:string) => {
               💬 {r.message}
             </div>
 
+             <button
+  onClick={async () => {
+    const confirmDelete = confirm("¿Eliminar reporte?")
+    if (!confirmDelete) return
+
+    await supabase
+      .from("maintenance_reports")
+      .delete()
+      .eq("id", r.id)
+
+    loadData()
+  }}
+  className="text-xs text-red-600 mt-2"
+>
+  Eliminar
+</button>
+
           </div>
         ))}
 
@@ -522,6 +553,15 @@ const deleteTask = async (taskId:string) => {
 
           const taskAssignments = assignments.filter(a => a.task_id === t.id)
 
+          // 🔥 NUEVO: consumo por tarea
+const logs = stockLogs.filter(l => l.task_id === t.id)
+
+const grouped: Record<string, number> = {}
+
+logs.forEach(l => {
+  grouped[l.product_id] = (grouped[l.product_id] || 0) + l.quantity
+})
+
           return (
             <div key={t.id} className="border rounded-xl p-4 space-y-2">
 
@@ -555,6 +595,23 @@ const deleteTask = async (taskId:string) => {
 
                 </div>
               ))}
+
+              {/* 🔥 NUEVO: consumo */}
+{Object.keys(grouped).length > 0 && (
+  <div className="bg-gray-50 p-2 rounded text-xs space-y-1">
+
+    <div className="font-medium text-gray-600">
+      Consumo
+    </div>
+
+    {Object.entries(grouped).map(([productId, qty]) => (
+      <div key={productId}>
+        {getProductName(productId)} {qty}
+      </div>
+    ))}
+
+  </div>
+)}
 
               <button
                 onClick={()=>deleteTask(t.id)}
