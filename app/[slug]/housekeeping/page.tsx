@@ -5,25 +5,13 @@ import { supabase } from "@/lib/supabase/client"
 import { getUserBusinessRole } from "@/lib/auth"
 import OnaSplash from "@/components/OnaSplash"
 
-type Assignment = {
-  id: string
-  task_id: string
-  status: string
-}
-
-type Task = {
-  id: string
-  title: string
-  description: string
-  type: string
-}
-
 export default function Page({ params }: { params: Promise<{ slug: string }> }) {
 
   const [slug,setSlug] = useState<string | null>(null)
   const [tasks,setTasks] = useState<any[]>([])
   const [user,setUser] = useState<any>(null)
   const [businessId,setBusinessId] = useState<string | null>(null)
+  const [products,setProducts] = useState<any[]>([])
 
   const [showSplash,setShowSplash] = useState(true)
 
@@ -46,10 +34,21 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
       setBusinessId(business.id)
 
       loadTasks(user.id, business.id)
+      loadProducts(business.id)
     }
 
     init()
   },[slug])
+
+  const loadProducts = async (businessId:string) => {
+
+    const { data } = await supabase
+      .from("products")
+      .select("*")
+      .eq("business_id", businessId)
+
+    setProducts(data || [])
+  }
 
   const loadTasks = async (userId:string, businessId:string) => {
 
@@ -88,7 +87,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     setTasks(merged)
   }
 
-  // 🔥 SOLO UNA TAREA ACTIVA
   const acceptTask = async (id:string) => {
 
     const { data: activeTasks } = await supabase
@@ -114,10 +112,28 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     loadTasks(user.id, businessId!)
   }
 
-  const completeTask = async (id:string) => {
+  const completeTask = async (assignmentId:string, task:any) => {
 
-    const comment = prompt("Comentario sobre la tarea (opcional)") || ""
+    // 💬 comentario
+    const comment = prompt("Comentario (opcional)") || ""
 
+    // 🧪 seleccionar productos usados
+    const usedProducts: { product:any, qty:number }[] = []
+
+    for (const p of products) {
+
+      const qtyStr = prompt(`¿Cuántas unidades de ${p.name} se TERMINARON? (enter = 0)`)
+
+if (!qtyStr) continue
+
+const qty = Number(qtyStr)
+
+if (qty > 0) {
+  usedProducts.push({ product:p, qty })
+}
+    }
+
+    // ✅ update tarea
     await supabase
       .from("task_assignments")
       .update({
@@ -125,16 +141,34 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
         completed_at: new Date().toISOString(),
         comment
       })
-      .eq("id", id)
+      .eq("id", assignmentId)
+
+    // 🔥 guardar logs + descontar stock
+    for (const u of usedProducts) {
+
+      await supabase.from("task_stock_logs").insert({
+        task_id: task.id,
+        product_id: u.product.id,
+        quantity: u.qty,
+        user_id: user.id,
+        business_id: businessId
+      })
+
+      const newStock = Math.max(0, u.product.stock - u.qty)
+
+      await supabase
+        .from("products")
+        .update({ stock: newStock })
+        .eq("id", u.product.id)
+    }
 
     loadTasks(user.id, businessId!)
+    loadProducts(businessId!)
   }
 
-  // 🔥 NUEVO: REPORTAR PROBLEMA
   const reportIssue = async (taskId:string) => {
 
     const message = prompt("Describí el problema") || ""
-
     if (!message) return
 
     await supabase
@@ -162,12 +196,9 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     <div className="max-w-2xl mx-auto p-6 space-y-4">
 
       <div className="flex justify-between items-center">
-
         <div className="flex items-center gap-2">
-          <img src="/ona-icon.png" alt="ONA" className="w-8 h-8" />
-          <span className="text-lg font-medium">
-            Housekeeping
-          </span>
+          <img src="/ona-icon.png" className="w-8 h-8" />
+          <span className="text-lg font-medium">Housekeeping</span>
         </div>
 
         <button
@@ -208,14 +239,13 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
             {t.status === "accepted" && (
               <button
-                onClick={()=>completeTask(t.id)}
+                onClick={()=>completeTask(t.id, t.task)}
                 className="bg-green-600 text-white px-2 py-1 text-xs rounded"
               >
                 Finalizar
               </button>
             )}
 
-            {/* 🔥 NUEVO BOTÓN */}
             <button
               onClick={()=>reportIssue(t.task_id)}
               className="bg-red-500 text-white px-2 py-1 text-xs rounded"

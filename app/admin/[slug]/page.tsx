@@ -49,6 +49,19 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
   const [assignments,setAssignments] = useState<Assignment[]>([])
   const [reports,setReports] = useState<Report[]>([]) // 🔥 NUEVO
 
+
+// 🔥 STOCK
+type Product = {
+  id: string
+  name: string
+  stock: number
+}
+
+const [products,setProducts] = useState<Product[]>([])
+const [newProductName,setNewProductName] = useState("")
+const [newProductStock,setNewProductStock] = useState("")
+
+
   const [taskTitle,setTaskTitle] = useState("")
   const [taskDesc,setTaskDesc] = useState("")
   const [taskType,setTaskType] = useState("common")
@@ -112,6 +125,14 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
       .order("created_at", { ascending: false })
 
     setReports(reportsData || [])
+
+    // 🔥 STOCK
+const { data: prodData } = await supabase
+  .from("products")
+  .select("*")
+  .eq("business_id", bizData.id)
+
+setProducts(prodData || [])
 
     const { data: relations } = await supabase
       .from("business_users")
@@ -190,9 +211,27 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
     await loadData()
   }
+// 🔥 STOCK
+const createProduct = async () => {
+  if(!biz || !newProductName) return
 
-  const deleteTask = async (taskId:string) => {
+  await supabase.from("products").insert({
+    business_id: biz.id,
+    name: newProductName,
+    stock: Number(newProductStock || 0)
+  })
 
+  setNewProductName("")
+  setNewProductStock("")
+  loadData()
+}
+
+const deleteProduct = async (id:string) => {
+  await supabase.from("products").delete().eq("id", id)
+  loadData()
+
+}
+const deleteTask = async (taskId:string) => {
     if (!confirm("Eliminar tarea?")) return
 
     await supabase.from("task_assignments").delete().eq("task_id", taskId)
@@ -254,6 +293,76 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
           Logout
         </button>
       </div>
+
+{/* 📦 STOCK */}
+<div className="bg-white p-4 rounded-xl border space-y-3">
+
+  <h2 className="text-sm font-semibold">📦 Stock</h2>
+
+  <div className="flex gap-2">
+    <input
+      placeholder="Producto"
+      value={newProductName}
+      onChange={e=>setNewProductName(e.target.value)}
+      className="border px-2 py-1 rounded text-sm w-full"
+    />
+
+    <input
+      type="number"
+      placeholder="Stock"
+      value={newProductStock}
+      onChange={e=>setNewProductStock(e.target.value)}
+      className="border px-2 py-1 rounded text-sm w-20"
+    />
+
+    <button
+      onClick={createProduct}
+      className="bg-green-600 text-white px-2 rounded"
+    >
+      +
+    </button>
+  </div>
+
+  {products.map(p => (
+    <div key={p.id} className="flex justify-between items-center text-sm">
+
+      <div>{p.name}</div>
+
+      <div className="flex items-center gap-2">
+
+        <button
+          onClick={async ()=>{
+            await supabase.from("products")
+              .update({ stock: Math.max(0, p.stock - 1) })
+              .eq("id", p.id)
+            loadData()
+          }}
+        >-</button>
+
+        <div>{p.stock}</div>
+
+        <button
+          onClick={async ()=>{
+            await supabase.from("products")
+              .update({ stock: p.stock + 1 })
+              .eq("id", p.id)
+            loadData()
+          }}
+        >+</button>
+
+        <button
+          onClick={()=>deleteProduct(p.id)}
+          className="text-red-600"
+        >
+          x
+        </button>
+
+      </div>
+
+    </div>
+  ))}
+
+</div>
 
       {/* DASHBOARD */}
       <div className="bg-white p-4 rounded-xl border space-y-3">
