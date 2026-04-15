@@ -8,7 +8,6 @@ type Business = {
   name: string
   slug: string
   features: any
-  is_active: boolean
 }
 
 type BusinessUser = {
@@ -26,10 +25,8 @@ export default function SuperAdminPage(){
   const [newSlug,setNewSlug] = useState("")
 
   const [cta,setCta] = useState("booking")
-  const [home,setHome] = useState("booking")
   const [hasGallery,setHasGallery] = useState(true)
   const [hasBooking,setHasBooking] = useState(true)
-  const [isActive,setIsActive] = useState(true)
 
   const [userId,setUserId] = useState("")
   const [role,setRole] = useState("admin")
@@ -77,12 +74,11 @@ export default function SuperAdminPage(){
     const f = biz.features || {}
 
     setCta(f.cta || "booking")
-    setHome(f.home || "booking")
     setHasGallery(!!f.gallery)
     setHasBooking(!!f.booking)
-    setIsActive(biz.is_active ?? true)
   }
 
+  // 🔥 CREAR NEGOCIO
   const handleCreateBusiness = async () => {
 
     const { error } = await supabase
@@ -95,8 +91,7 @@ export default function SuperAdminPage(){
           booking: ["home"],
           gallery: ["home"],
           _order: ["gallery","booking"],
-          cta: "booking",
-          home: "booking"
+          cta: "booking"
         }
       })
 
@@ -112,13 +107,13 @@ export default function SuperAdminPage(){
     await loadBusinesses()
   }
 
+  // 🔥 FEATURES
   const handleSaveFeatures = async () => {
 
     if(!selectedBusiness) return
 
     const features:any = {
-      _order: [],
-      home: home
+      _order: []
     }
 
     if(hasGallery){
@@ -135,10 +130,7 @@ export default function SuperAdminPage(){
 
     const { error } = await supabase
       .from("business")
-      .update({
-        features,
-        is_active: isActive
-      })
+      .update({ features })
       .eq("id", selectedBusiness.id)
 
     if(error){
@@ -146,11 +138,12 @@ export default function SuperAdminPage(){
       return
     }
 
-    setMessage("Configuración guardada 🚀")
+    setMessage("Features guardadas 🚀")
 
     await loadBusinesses()
   }
 
+  // 🔥 ASIGNAR
   const handleAssign = async () => {
 
     const { error } = await supabase
@@ -174,6 +167,7 @@ export default function SuperAdminPage(){
     }
   }
 
+  // 🔥 ELIMINAR
   const handleRemove = async (id:string) => {
 
     await supabase
@@ -191,7 +185,7 @@ export default function SuperAdminPage(){
 
       <h1 className="text-2xl font-bold">Superadmin</h1>
 
-      {/* CREAR NEGOCIO */}
+      {/* 🔥 CREAR NEGOCIO */}
       <div className="border p-4 space-y-3">
         <h2 className="font-semibold">Crear negocio</h2>
 
@@ -233,51 +227,22 @@ export default function SuperAdminPage(){
         </select>
       </div>
 
-      {/* CONFIG */}
+      {/* FEATURES */}
       {selectedBusiness && (
         <div className="border p-4 space-y-4">
 
           <h2 className="font-semibold">
-            Configuración
+            Features
           </h2>
 
-          {/* ACTIVO */}
-          <label className="flex gap-2">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={()=>setIsActive(!isActive)}
-            />
-            Negocio activo
-          </label>
-
-          {/* HOME */}
-          <div>
-            <label>Home</label>
-            <select
-              value={home}
-              onChange={(e)=>setHome(e.target.value)}
-              className="w-full border p-2"
-            >
-              <option value="booking">Booking</option>
-              <option value="visit">Visit</option>
-              <option value="residencias">Residencias</option>
-            </select>
-          </div>
-
-          {/* CTA */}
-          <div>
-            <label>CTA</label>
-            <select
-              value={cta}
-              onChange={(e)=>setCta(e.target.value)}
-              className="w-full border p-2"
-            >
-              <option value="booking">Reservar</option>
-              <option value="visit">Visitar</option>
-              <option value="residencias">Residencias</option>
-            </select>
-          </div>
+          <select
+            value={cta}
+            onChange={(e)=>setCta(e.target.value)}
+            className="w-full border p-2"
+          >
+            <option value="booking">Reservar</option>
+            <option value="visit">Visitar</option>
+          </select>
 
           <label className="flex gap-2">
             <input
@@ -301,7 +266,7 @@ export default function SuperAdminPage(){
             onClick={handleSaveFeatures}
             className="bg-black text-white px-4 py-2"
           >
-            Guardar configuración
+            Guardar features
           </button>
 
         </div>

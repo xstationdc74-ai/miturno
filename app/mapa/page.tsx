@@ -2,19 +2,27 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
+import dynamic from "next/dynamic"
+
+const BusinessMap = dynamic(
+  () => import("@/components/BusinessMap"),
+  { ssr: false }
+)
+import Link from "next/link"
 
 type Business = {
   id: string
   name: string
   slug: string
-  description?: string
-  cover_image?: string
+  description: string
+  cover_image: string
+  type: string
   lat: number
   lng: number
-  type: string
+  cta?: string
 }
 
-export default function Page() {
+export default function MapaPage(){
 
   const [businesses,setBusinesses] = useState<Business[]>([])
   const [selected,setSelected] = useState<Business | null>(null)
@@ -25,103 +33,76 @@ export default function Page() {
 
   const load = async () => {
 
-    const { data } = await supabase
-     .from("business")
-     .select("*")
-     .eq("is_active", true)
+  const { data } = await supabase
+    .from("business")
+    .select("*")
 
-    setBusinesses(data || [])
-  }
+  console.log("MAP RAW:", data)
 
- const getCTA = (b: any) => {
-  if (b.cta === "visit") {
-    return {
-      label: "Visitar",
-      href: `/residencias/${b.slug}`
-    }
-  }
+  const filtered = (data || []).filter(b => b.is_active === true)
 
-  return {
-    label: "Reservar",
-    href: `/book/${b.slug}`
-  }
+  console.log("MAP FILTERED:", filtered)
+
+  console.log("SET BUSINESSES:", filtered)
+setBusinesses(filtered)
 }
-console.log("SELECTED:", selected)
+
   return (
-    <div className="w-full h-screen relative">
+    <div className="relative w-full h-screen">
 
       {/* MAPA */}
-      <div className="w-full h-full bg-gray-100 relative">
-
-        {businesses.map(b => (
-          <div
-            key={b.id}
-            onClick={()=>{
-  console.log("CLICK BUSINESS:", b)
-  setSelected(b)
-}}
-            className="absolute cursor-pointer"
-            style={{
-              top: `${50 + b.lat}%`,
-              left: `${50 + b.lng}%`
-            }}
-          >
-            <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow" />
-          </div>
-        ))}
-
-      </div>
+      <BusinessMap
+        businesses={businesses}
+        onSelect={(b:any)=>setSelected(b)}
+      />
 
       {/* CARD */}
       {selected && (
-        <div className="absolute bottom-4 left-4 right-4 bg-white rounded-xl shadow p-4 space-y-3">
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[90%] max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
 
-          {/* 🔥 C421 SPECIAL */}
-          {selected.type === "c421" ? (
-            <div className="text-center space-y-2">
-
-              <img
-                src="/c421-logo.png"
-                className="mx-auto w-16 opacity-90"
-              />
-
-             <div className="text-sm text-gray-500">
-             {selected.type}
-             </div>
-
-            </div>
-          ) : (
-            <>
-              {selected.cover_image && (
- <div className="w-full aspect-video overflow-hidden rounded-lg">
-    <img
-      src={selected.cover_image}
-      className="w-full h-full object-cover"
-    />
-  </div>
-)}
-
-              <div>
-                <div className="font-semibold text-lg">
-                  {selected.name}
-                </div>
-
-                {selected.description && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    {selected.description}
-                  </div>
-                )}
-              </div>
-            </>
-          )}
-
-          {/* CTA */}
-          <a
-            href={getCTA(selected).href}
-            className="block bg-green-600 text-white text-center py-2 rounded-lg text-sm"
+          <button
+            onClick={()=>setSelected(null)}
+            className="absolute right-2 top-2 text-gray-500"
           >
-            {getCTA(selected).label}
-          </a>
+            ✕
+          </button>
+
+          <div className="aspect-video bg-gray-100">
+            {selected.cover_image && (
+              <img
+                src={selected.cover_image}
+                className="w-full h-full object-cover"
+              />
+            )}
+          </div>
+
+          <div className="p-4 space-y-2">
+
+            <div className="font-semibold text-lg">
+              {selected.name}
+            </div>
+
+            <div className="text-sm text-gray-500">
+              {selected.type}
+            </div>
+
+            <div className="text-sm text-gray-600">
+              {selected.description}
+            </div>
+
+            <Link
+              href={
+                selected.cta === "visit"
+                  ? `/residencias/${selected.slug}`
+                  : `/book/${selected.slug}`
+              }
+            >
+              <button className="w-full bg-green-600 text-white py-2 rounded-lg mt-2">
+                {selected.cta === "visit" ? "Visitar" : "Reservar"}
+              </button>
+            </Link>
+
+          </div>
 
         </div>
       )}

@@ -12,6 +12,7 @@ type Business = {
   cover_image: string
   type: string
   cta?: string
+  is_active?: boolean
 }
 
 export default function ExplorarPage() {
@@ -19,15 +20,19 @@ export default function ExplorarPage() {
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [loading, setLoading] = useState(true)
   const [type, setType] = useState<string | null>(null)
+  const [slug, setSlug] = useState<string | null>(null)
 
+  // 🔥 LEER PARAMS (slug + type)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
+
     setType(params.get("type"))
+    setSlug(params.get("slug"))
   }, [])
 
   useEffect(() => {
     fetchBusinesses()
-  }, [type])
+  }, [type, slug])
 
   const fetchBusinesses = async () => {
 
@@ -36,15 +41,25 @@ export default function ExplorarPage() {
     let query = supabase
       .from("business")
       .select("*")
-      .eq("is_active", true)
 
+    // 🔥 FILTRO POR SLUG (CALI)
+    if (slug) {
+      query = query.eq("slug", slug)
+    }
+
+    // 🔥 FILTRO POR TYPE
     if (type) {
       query = query.eq("type", type)
     }
 
     const { data } = await query
 
-    setBusinesses(data || [])
+    // 🔥 FILTRO FINAL
+    const filtered = (data || []).filter(
+      (b) => b.is_active === true
+    )
+
+    setBusinesses(filtered)
     setLoading(false)
   }
 
@@ -72,7 +87,11 @@ export default function ExplorarPage() {
           return (
             <Link
               key={f.label}
-              href={f.value ? `/explorar?type=${f.value}` : "/explorar"}
+              href={
+                f.value
+                  ? `/explorar?type=${f.value}${slug ? `&slug=${slug}` : ""}`
+                  : `/explorar${slug ? `?slug=${slug}` : ""}`
+              }
             >
               <button
                 className={`px-3 py-1.5 text-sm rounded-lg transition ${
@@ -108,7 +127,7 @@ export default function ExplorarPage() {
 
               <div className="bg-white rounded-xl overflow-hidden border hover:shadow-md transition cursor-pointer">
 
-               <div className="w-full aspect-video bg-gray-100 overflow-hidden">
+                <div className="w-full aspect-video bg-gray-100 overflow-hidden">
                   {b.cover_image ? (
                     <img
                       src={b.cover_image}
