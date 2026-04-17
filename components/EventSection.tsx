@@ -17,7 +17,7 @@ export default function EventSection({ businessId }: { businessId: string }) {
 
   const createEvent = async () => {
 
-    console.log("CREATE EVENT RUNNING")
+   
 
     if(!name || !price || !capacity || !startDate || !endDate){
       alert("Faltan datos")

@@ -45,8 +45,6 @@ export default function BusinessMap({
   onSelect?: (b: any) => void
 }) {
 
-  console.log("BUSINESSES IN MAP:", businesses)
-
   const validBusinesses = businesses.filter(
     (b) => b.lat !== null && b.lng !== null
   )

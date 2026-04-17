@@ -112,8 +112,6 @@ export default function Page({
 
   if (!biz) return <div className="p-10">Cargando...</div>
 
-  console.log("CURRENT PAGE:", currentPage)
-  console.log("SHOW GALLERY:", biz?.features?.gallery?.includes(currentPage))
 
   const showBooking = biz.features?.booking?.includes(currentPage)
   const showGallery = biz.features?.gallery?.includes(currentPage)

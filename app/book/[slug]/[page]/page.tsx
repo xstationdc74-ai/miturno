@@ -81,7 +81,7 @@ export default function Page({
 
   if (!biz) return <div className="p-10">Cargando...</div>
 
-  console.log("🔥 PAGE NUEVA ACTIVA", biz.features)
+ 
 
   // 🔥 FEATURES + ORDER DESDE DB
 

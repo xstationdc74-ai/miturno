@@ -20,7 +20,7 @@ export default function SuperAdminLayout({
       const { data: sessionData } = await supabase.auth.getSession()
       const user = sessionData.session?.user
 
-      console.log("SUPERADMIN USER:", user)
+     
 
       // 🔴 SI NO HAY USER → LOGIN
       if(!user){

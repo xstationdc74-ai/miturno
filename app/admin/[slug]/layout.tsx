@@ -1,84 +1,81 @@
-"use client"
+import { createSupabaseServerClient } from "@/lib/supabase/server"
+import { redirect } from "next/navigation"
 
-import { useEffect, useState, use } from "react"
-import { supabase } from "@/lib/supabase/client"
-import { useRouter } from "next/navigation"
-
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
   params,
 }: {
   children: React.ReactNode
   params: Promise<{ slug: string }>
 }) {
+  // 🔥 FIX CLAVE
+  const { slug } = await params
 
-  const router = useRouter()
-  const [loading,setLoading] = useState(true)
+  const supabase = await createSupabaseServerClient()
 
-  const { slug } = use(params)
+  // 🔐 1. Validar sesión
+  const {
+    data: { session },
+  } = await supabase.auth.getSession()
 
-  useEffect(()=>{
+  
 
-    const checkAccess = async () => {
-
-      const { data: sessionData } = await supabase.auth.getSession()
-      const user = sessionData.session?.user
-
-      // 🔴 NO LOGIN → GUARDAR REDIRECT
-      if(!user){
-        sessionStorage.setItem("redirectAfterLogin", window.location.pathname)
-        router.replace("/login")
-        return
-      }
-
-      // 🔎 negocio
-      const { data: biz } = await supabase
-        .from("business")
-        .select("id")
-        .eq("slug", slug)
-        .single()
-
-      if(!biz){
-        router.replace("/")
-        return
-      }
-
-      // 🔐 relación
-      const { data: relation } = await supabase
-        .from("business_users")
-        .select("*")
-        .eq("user_id", user.id)
-        .eq("business_id", biz.id)
-        .single()
-
-      if(!relation){
-        router.replace("/")
-        return
-      }
-
-      // 🔴 ROLE
-      if(relation.role !== "admin"){
-        alert("No tenés permisos para acceder")
-        await supabase.auth.signOut()
-        sessionStorage.clear()
-        router.replace("/login")
-        return
-      }
-
-      setLoading(false)
-    }
-
-    checkAccess()
-
-  },[slug])
-
-  if(loading){
-    return <div className="p-10">Cargando...</div>
+  if (!session) {
+    
+    return redirect("/login")
   }
 
-  return (
-    <div>
-      {children}
-    </div>
-  )
+  // 👤 2. Obtener usuario
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  
+
+  if (!user) {
+    
+    return redirect("/login")
+  }
+
+
+  // 🏢 3. Obtener business_id del usuario
+  const { data: businessUser, error: buError } = await supabase
+    .from("business_users")
+    .select("business_id")
+    .eq("user_id", user.id)
+    .single()
+
+  
+
+  if (buError || !businessUser) {
+   
+    return redirect("/login")
+  }
+
+  // 🏢 4. Obtener slug del business
+  const { data: business, error: bError } = await supabase
+    .from("business")
+    .select("slug")
+    .eq("id", businessUser.business_id)
+    .single()
+
+  
+
+  if (bError || !business) {
+    
+    return redirect("/login")
+  }
+
+  // 🔒 5. Validar slug contra URL
+  
+
+  if (business.slug !== slug) {
+  
+    return redirect("/login")
+  }
+
+  
+
+  // ✅ 6. Acceso permitido
+  return <>{children}</>
 }

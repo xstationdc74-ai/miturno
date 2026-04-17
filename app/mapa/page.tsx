@@ -37,13 +37,10 @@ export default function MapaPage(){
     .from("business")
     .select("*")
 
-  console.log("MAP RAW:", data)
+ 
 
   const filtered = (data || []).filter(b => b.is_active === true)
 
-  console.log("MAP FILTERED:", filtered)
-
-  console.log("SET BUSINESSES:", filtered)
 setBusinesses(filtered)
 }
 

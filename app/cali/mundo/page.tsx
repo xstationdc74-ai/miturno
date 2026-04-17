@@ -60,7 +60,7 @@ export default function CaliMundo() {
               href="/cali/galeria"
               className="inline-block mt-2 px-5 py-2 rounded-full text-sm bg-[#7FA6C9] hover:bg-[#6B93B5] text-white transition"
             >
-              Ver piezas
+              Ver Piezas
             </Link>
 
           </div>
@@ -80,10 +80,12 @@ export default function CaliMundo() {
               Espacios para experimentar con tintes naturales y conectar con los procesos del bosque.
             </p>
 
-            <span className="text-sm text-gray-400">
-              Próximamente
-            </span>
-
+            <Link
+              href="/cali/talleres"
+              className="inline-block mt-2 px-5 py-2 rounded-full text-sm bg-[#7FA6C9] hover:bg-[#6B93B5] text-white transition"
+            >
+              Ver Talleres
+           </Link>
           </div>
 
           <img
@@ -111,9 +113,12 @@ export default function CaliMundo() {
               Experiencias compartidas donde arte, naturaleza y comunidad se encuentran.
             </p>
 
-            <span className="text-sm text-gray-400">
-              Próximamente
-            </span>
+            <Link
+              href="/cali/eventos"
+              className="inline-block mt-2 px-5 py-2 rounded-full text-sm bg-[#7FA6C9] hover:bg-[#6B93B5] text-white transition"
+            >
+              Ver Eventos
+           </Link>
 
           </div>
 
