@@ -21,7 +21,7 @@ Tengo un espacio llamado "${business}" (${type || "sin tipo"}).
 Mi WhatsApp es ${phone}.
 Me gustaría sumarme a Kume 🌱`
 
-  const url = `https://wa.me/5491134490093?text=${encodeURIComponent(text)}`
+  const url = `https://wa.me/5491124604472?text=${encodeURIComponent(text)}`
 
   window.open(url, "_blank")
 }

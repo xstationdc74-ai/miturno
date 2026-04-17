@@ -140,7 +140,7 @@ Me interesa participar en:
         </p>
 
         <a
-          href="https://wa.me/5491134490093?text=Hola!%20👋%20Vi%20Cali%20y%20me%20encantó.%20Quisiera%20una%20app%20para%20mi%20proyecto."
+          href="https://wa.me/5491124604472?text=Hola!%20👋%20Vi%20Cali%20y%20me%20encantó.%20Quisiera%20una%20app%20para%20mi%20proyecto."
           target="_blank"
           className="inline-block text-sm underline text-gray-700"
         >
