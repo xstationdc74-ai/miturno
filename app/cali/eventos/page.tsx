@@ -43,7 +43,7 @@ Me interesa participar en:
 
 ¡Gracias!`
 
-    const url = `https://wa.me/5491134490093?text=${encodeURIComponent(message)}`
+    const url = `https://wa.me/5491124604472?text=${encodeURIComponent(message)}`
     window.open(url, "_blank")
   }
 
