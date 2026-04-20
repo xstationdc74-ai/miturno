@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Allura&display=swap');
+
+.title {
+  font-family: 'Cormorant Garamond', serif;
+  letter-spacing: 0.5px;
+}
+
+.script {
+  font-family: 'Allura', cursive;
+}
