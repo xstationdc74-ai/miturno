@@ -5,7 +5,9 @@ import { supabase } from "@/lib/supabase/client"
 import { getUserBusinessRole } from "@/lib/auth"
 import OnaSplash from "@/components/ona/OnaSplash"
 
-export default function Page({ params }: { params: Promise<{ slug: string }> }) {
+const DEFAULT_SLUG = "ona"
+
+export default function Page() {
 
   const [slug,setSlug] = useState<string | null>(null)
   const [tasks,setTasks] = useState<any[]>([])
@@ -15,26 +17,30 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
   const [showSplash,setShowSplash] = useState(true)
 
-  // 🔥 NUEVO
   const [showStockModal,setShowStockModal] = useState(false)
   const [activeTask,setActiveTask] = useState<any>(null)
   const [stockInputs,setStockInputs] = useState<Record<string, number>>({})
   const [comment,setComment] = useState("")
 
   useEffect(()=>{
-    const loadParams = async () => {
-      const p = await params
-      setSlug(p.slug)
-    }
-    loadParams()
-  },[params])
+    setSlug(DEFAULT_SLUG)
+  },[])
 
   useEffect(()=>{
     const init = async () => {
       if (!slug) return
 
-      const { user, business } = await getUserBusinessRole(slug)
-      if (!user || !business) return
+      const { user, role, business } = await getUserBusinessRole(slug)
+
+if (!user) {
+  window.location.href = "/login"
+  return
+}
+
+if (!business) {
+  window.location.href = "/login"
+  return
+}
 
       setUser(user)
       setBusinessId(business.id)
@@ -117,7 +123,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     loadTasks(user.id, businessId!)
   }
 
-  // 🔥 ABRIR MODAL
   const openCompleteModal = (task:any) => {
     setActiveTask(task)
     setShowStockModal(true)
@@ -125,12 +130,10 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
     setComment("")
   }
 
-  // 🔥 CONFIRMAR
   const confirmComplete = async () => {
 
     if (!activeTask) return
 
-    // guardar tarea
     await supabase
       .from("task_assignments")
       .update({
@@ -140,7 +143,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
       })
       .eq("id", activeTask.id)
 
-    // stock + logs
     for (const productId in stockInputs) {
 
       const qty = stockInputs[productId]
@@ -200,7 +202,7 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
 
       <div className="flex justify-between items-center">
         <div className="flex items-center gap-2">
-          <img src="/ona-icon.png" className="w-8 h-8" />
+          <img src="/ona/ona-icon.png" className="w-8 h-8" />
           <span className="text-lg font-medium">Housekeeping</span>
         </div>
 
@@ -261,7 +263,6 @@ export default function Page({ params }: { params: Promise<{ slug: string }> }) 
         </div>
       ))}
 
-      {/* 🔥 MODAL */}
       {showStockModal && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 

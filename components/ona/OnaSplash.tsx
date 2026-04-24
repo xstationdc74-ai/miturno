@@ -21,7 +21,7 @@ export default function OnaSplash({ onFinish }: { onFinish: () => void }) {
     <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
 
       <img
-        src="/ona-logo.png"
+        src="/ona/ona-logo.png"
         alt="ONA"
         className="w-40"
       />

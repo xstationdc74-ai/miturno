@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
-import OnaSplash from "@/components/OnaSplash"
+import OnaSplash from "@/components/ona/OnaSplash"
 
 type Business = {
   id: string

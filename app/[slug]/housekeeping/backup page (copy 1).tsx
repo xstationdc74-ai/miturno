@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 import { getUserBusinessRole } from "@/lib/auth"
-import OnaSplash from "@/components/OnaSplash"
+import OnaSplash from "@/components/ona/OnaSplash"
 
 export default function Page({ params }: { params: Promise<{ slug: string }> }) {
 

@@ -17,7 +17,7 @@ export default function LoginPage() {
     setLoading(true)
     setError(null)
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -28,8 +28,38 @@ export default function LoginPage() {
       return
     }
 
-    // 🔥 IMPORTANTE: forzar navegación después de login
-    router.push("/admin/ona")
+    const user = data.user
+    if (!user) return
+
+    // 🔥 buscar relación user-business
+    const { data: relation, error: relError } = await supabase
+      .from("business_users")
+      .select("role, business_id")
+      .eq("user_id", user.id)
+      .single()
+
+    if (relError || !relation) {
+      setError("No tenés acceso a ningún negocio")
+      setLoading(false)
+      return
+    }
+
+    // 🔥 obtener slug del business
+    const { data: business } = await supabase
+      .from("business")
+      .select("slug")
+      .eq("id", relation.business_id)
+      .single()
+
+    const slug = business?.slug
+
+    // 🔥 redirect según rol
+    if (relation.role === "admin") {
+      router.push(`/admin/${slug}`)
+    } else {
+      router.push(`/${slug}`)
+    }
+
     router.refresh()
   }
 
