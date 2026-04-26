@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Ona Housekeeping",
     description: "Sistema de housekeeping para equipos de limpieza.",
-    url: "https://tudominio.com/ona", // ⚠️ ajustar después
+    url: "https://kume-patagonia.vercel.app/ona", // ⚠️ ajustar después
     siteName: "Ona",
     images: [
       {

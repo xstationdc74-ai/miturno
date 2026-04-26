@@ -7,6 +7,49 @@ import OnaSplash from "@/components/ona/OnaSplash"
 
 const DEFAULT_SLUG = "ona"
 
+async function generateTasksIfNeeded(businessId: string) {
+  const today = new Date()
+  const day = today.getDay()
+
+  // 🔍 verificar si ya hay tareas hoy
+  const start = new Date()
+  start.setHours(0,0,0,0)
+
+  const end = new Date()
+  end.setHours(23,59,59,999)
+
+  const { data: existing } = await supabase
+    .from("tasks")
+    .select("id")
+    .eq("business_id", businessId)
+    .gte("created_at", start.toISOString())
+    .lte("created_at", end.toISOString())
+
+  if (existing && existing.length > 0) return
+
+  // 🔥 traer templates
+  const { data: templates } = await supabase
+    .from("task_templates")
+    .select("*")
+    .eq("business_id", businessId)
+    .eq("active", true)
+
+  if (!templates) return
+
+  const todaysTemplates = templates.filter(t =>
+    t.days_of_week.includes(day)
+  )
+
+  for (const t of todaysTemplates) {
+    await supabase.from("tasks").insert({
+      business_id: businessId,
+      title: t.title,
+      description: t.description,
+      type: t.type
+    })
+  }
+}
+
 export default function Page() {
 
   const [slug,setSlug] = useState<string | null>(null)
@@ -44,6 +87,8 @@ if (!business) {
 
       setUser(user)
       setBusinessId(business.id)
+
+      await generateTasksIfNeeded(business.id)
 
       loadTasks(user.id, business.id)
       loadProducts(business.id)
