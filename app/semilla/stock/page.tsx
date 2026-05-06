@@ -7,6 +7,12 @@ export default function StockPage() {
       
       {/* HEADER */}
       <div className="px-5 pt-6">
+
+        <img
+  src="/semilla/stock.png"
+  alt="Gestión de stock"
+  className="rounded-xl mb-4 w-full h-40 object-cover"
+/>
         <h1 className="text-2xl font-semibold text-[#2F4F2F] mb-2">
           Stock
         </h1>

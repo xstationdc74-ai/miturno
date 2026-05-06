@@ -1,3 +1,4 @@
+"use client"
 import Image from "next/image";
 import Features from "./Features";
 import InfoCard from "./InfoCard";
@@ -23,9 +24,14 @@ export default function Hero() {
         Creamos experiencias digitales que impulsan tu negocio.
       </p>
 
-      <button className="bg-[#2F4F2F] text-white px-8 py-4 rounded-2xl shadow-lg hover:opacity-90 transition-all">
-        Explorar soluciones
-      </button>
+      <button
+  onClick={() => {
+    document.getElementById("solutions")?.scrollIntoView({ behavior: "smooth" })
+  }}
+  className="bg-green-800 text-white px-6 py-3 rounded-xl shadow-md hover:scale-105 transition"
+>
+  Explorar soluciones
+</button>
 
       <Features />
       <Solutions />

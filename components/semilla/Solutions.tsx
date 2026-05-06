@@ -54,7 +54,7 @@ export default function Solutions() {
   ];
 
   return (
-    <div className="mt-16 w-full max-w-md">
+    <div id="solutions" className="mt-16 w-full max-w-md">
       
       {/* TITULO */}
       <h2 className="text-2xl font-semibold text-[#2F4F2F] mb-2 text-center">
