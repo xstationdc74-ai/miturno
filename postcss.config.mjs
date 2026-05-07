@@ -1,7 +1,11 @@
-const config = {
-  plugins: {
-    "@tailwindcss/postcss": {},
-  },
-};
+import nextPWA from 'next-pwa'
 
-export default config;
+const withPWA = nextPWA({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+})
+
+export default withPWA({
+  reactStrictMode: true,
+})
