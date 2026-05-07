@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+html {
+  color-scheme: light;
+}
+
+body {
+  background: #ffffff;
+}
+
 body {
   background: white;
   color: black;

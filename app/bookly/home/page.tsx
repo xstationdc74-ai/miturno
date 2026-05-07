@@ -87,7 +87,7 @@ export default function OwnerHome() {
 
         <p
           style={{
-            color: '#777',
+            color: theme.secondaryText,
           }}
         >
           Panel de gestión de turnos
@@ -132,7 +132,7 @@ export default function OwnerHome() {
         {turns.length === 0 ? (
           <p
             style={{
-              color: '#777',
+              color: theme.secondaryText,
             }}
           >
             No hay turnos todavía
@@ -143,7 +143,7 @@ export default function OwnerHome() {
               key={turn.id}
               style={{
                 padding: 14,
-                borderBottom: '1px solid #eee',
+                borderBottom: `1px solid ${theme.border}`,
                 position: 'relative',
               }}
             >
@@ -179,7 +179,7 @@ export default function OwnerHome() {
 
               <div
                 style={{
-                  color: '#666',
+                  color: theme.secondaryText,
                   marginTop: 4,
                 }}
               >
