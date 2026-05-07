@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 import Layout from '@/components/bookly/Layout'
 import Card from '@/components/bookly/Card'
@@ -65,6 +66,31 @@ export default function NewTurn() {
       } as React.CSSProperties}
     >
       <Layout>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: 24,
+            paddingTop: 10,
+          }}
+        >
+          <div
+  style={{
+    background: '#ffffff',
+    padding: '14px 26px',
+    borderRadius: 22,
+  }}
+>
+            <Image
+              src="/bookly/logobookly.png"
+              alt="Bookly"
+              width={150}
+              height={42}
+              priority
+            />
+          </div>
+        </div>
+
         <Card>
           <h1 style={{ marginBottom: 20 }}>
             Nuevo turno
@@ -81,28 +107,44 @@ export default function NewTurn() {
               placeholder="Nombre"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                background: theme.card,
+                color: theme.text,
+              }}
             />
 
             <input
               placeholder="Teléfono"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                background: theme.card,
+                color: theme.text,
+              }}
             />
 
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                background: theme.card,
+                color: theme.text,
+              }}
             />
 
             <input
               type="time"
               value={time}
               onChange={(e) => setTime(e.target.value)}
-              style={inputStyle}
+              style={{
+                ...inputStyle,
+                background: theme.card,
+                color: theme.text,
+              }}
             />
           </div>
 
@@ -120,7 +162,7 @@ export default function NewTurn() {
 const inputStyle = {
   padding: 12,
   borderRadius: 10,
-  border: '1px solid #ddd',
+  border: '1px solid rgba(255,255,255,0.1)',
   fontSize: 14,
   width: '100%',
 }

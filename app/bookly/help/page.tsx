@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 
 import Layout from '@/components/bookly/Layout'
 import Card from '@/components/bookly/Card'
@@ -41,6 +42,30 @@ export default function HelpPage() {
             marginBottom: 24,
           }}
         >
+          <div
+  style={{
+    display: 'flex',
+    justifyContent: 'center',
+    marginBottom: 24,
+    paddingTop: 10,
+  }}
+>
+  <div
+    style={{
+      background: '#ffffff',
+      padding: '14px 26px',
+      borderRadius: 22,
+    }}
+  >
+    <Image
+      src="/bookly/logobookly.png"
+      alt="Bookly"
+      width={150}
+      height={42}
+      priority
+    />
+  </div>
+</div>
           <h1
             style={{
               fontSize: 32,
@@ -52,7 +77,8 @@ export default function HelpPage() {
 
           <p
             style={{
-              color: '#666',
+              color: theme.text,
+opacity: 0.7,
               lineHeight: 1.6,
             }}
           >
@@ -68,7 +94,8 @@ export default function HelpPage() {
 
           <p
             style={{
-              color: '#666',
+              color: theme.text,
+opacity: 0.7,
               lineHeight: 1.6,
             }}
           >
@@ -86,7 +113,8 @@ export default function HelpPage() {
 
             <p
               style={{
-                color: '#666',
+                color: theme.text,
+opacity: 0.7,
                 lineHeight: 1.6,
               }}
             >
@@ -105,7 +133,8 @@ export default function HelpPage() {
 
             <p
               style={{
-                color: '#666',
+                color: theme.text,
+opacity: 0.7,
                 lineHeight: 1.6,
               }}
             >
@@ -124,7 +153,8 @@ export default function HelpPage() {
 
             <p
               style={{
-                color: '#666',
+                color: theme.text,
+opacity: 0.7,
                 lineHeight: 1.6,
               }}
             >
@@ -143,7 +173,8 @@ export default function HelpPage() {
 
             <p
               style={{
-                color: '#666',
+                color: theme.text,
+opacity: 0.7,
                 lineHeight: 1.6,
               }}
             >
