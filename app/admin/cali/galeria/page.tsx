@@ -32,16 +32,18 @@ export default function CaliGaleriaAdmin() {
   const [imageUrl, setImageUrl] = useState("")
 
   const loadGallery = async () => {
-
+   
   setLoading(true)
 
-  const { data } = await supabase
-    .from("gallery")
-    .select("*")
-    .eq("business_id", BUSINESS_ID)
-    .order("created_at", { ascending: false })
+const { data, error } = await supabase
+  .from("gallery")
+  .select("*")
+  .eq("business_id", BUSINESS_ID)
+  .order("created_at", { ascending: false })
 
-  setItems(data || [])
+
+
+setItems(data || [])
 
   setLoading(false)
 }
@@ -174,6 +176,7 @@ export default function CaliGaleriaAdmin() {
       </div>
     )
   }
+
 
   return (
 
