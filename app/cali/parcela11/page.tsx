@@ -1,6 +1,6 @@
 "use client"
 
-import CaliNav from "@/components/CaliNav"
+import CaliNav from "@/components/cali/CaliNav"
 import Link from "next/link"
 
 export default function CaliEspacio() {

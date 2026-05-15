@@ -1,9 +1,33 @@
 "use client"
 
 import Link from "next/link"
-import CaliNav from "@/components/CaliNav"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
+import CaliNav from "@/components/cali/CaliNav"
 
 export default function CaliHome() {
+
+  const [content, setContent] = useState<any>(null)
+
+useEffect(() => {
+
+  const loadContent = async () => {
+
+    const { data } = await supabase
+      .from("business_content")
+      .select("*")
+      .eq("business_id", "20ce3f03-7991-423e-8495-d90ed8b1acea")
+      .eq("section", "home")
+      .single()
+
+    if (data) {
+      setContent(data)
+    }
+  }
+
+  loadContent()
+
+}, [])
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -16,7 +40,7 @@ export default function CaliHome() {
 
         {/* IMAGEN */}
         <img
-          src="/cali-hero.jpg"
+          src={content?.hero_image || "/cali-hero.jpg"}
           className="absolute inset-0 w-full h-full object-cover"
         />
 
@@ -34,14 +58,14 @@ export default function CaliHome() {
             />
 
             <p className="text-xl md:text-2xl max-w-xl italic tracking-wide font-serif">
-              Textiles que nacen del bosque
+              {content?.hero_text || "Textiles que nacen del bosque"}
             </p>
 
             <Link
               href="/cali/mundo"
               className="inline-block mt-6 px-6 py-3 rounded-full text-sm bg-[#7FA6C9] hover:bg-[#6B93B5] transition"
             >
-              Entrar al mundo Cali
+              {content?.cta_text || "Entrar al mundo Cali"}
             </Link>
 
           </div>
@@ -54,7 +78,7 @@ export default function CaliHome() {
       <div className="max-w-2xl mx-auto px-6 py-20 text-center space-y-6">
 
         <p className="text-[#7FA6C9] leading-relaxed text-lg">
-          Un espacio donde la naturaleza, el arte y la experimentación se encuentran.
+          {content?.content || "Un espacio donde la naturaleza, el arte y la experimentación se encuentran."}
         </p>
 
       </div>

@@ -4,24 +4,23 @@ import CaliNav from "@/components/cali/CaliNav"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 
-type AboutContent = {
+type ParcelaContent = {
   hero_title: string
   hero_subtitle: string
   main_text: string
-  side_text: string
   image_url: string
 }
 
-export default function CaliAcerca() {
+export default function Parcela11Page() {
 
-  const [content, setContent] = useState<AboutContent | null>(null)
+  const [content, setContent] = useState<ParcelaContent | null>(null)
 
   useEffect(() => {
 
     const loadContent = async () => {
 
       const { data } = await supabase
-        .from("about_content")
+        .from("parcela_content")
         .select("*")
         .eq("business_id", "20ce3f03-7991-423e-8495-d90ed8b1acea")
         .single()
@@ -44,11 +43,11 @@ export default function CaliAcerca() {
       <div className="max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
 
         <h1 className="text-3xl md:text-4xl font-serif italic text-[#7FA6C9]">
-          {content?.hero_title || "Acerca de..."}
+          {content?.hero_title || "Parcela 11"}
         </h1>
 
         <p className="text-lg md:text-xl font-serif italic text-gray-600">
-          {content?.hero_subtitle || "Un vínculo entre el arte, el bosque y la experiencia"}
+          {content?.hero_subtitle || "Un espacio vivo entre bosque y encuentro"}
         </p>
 
       </div>
@@ -56,36 +55,15 @@ export default function CaliAcerca() {
       {/* 🌿 CONTENIDO */}
       <div className="max-w-5xl mx-auto px-6 pb-20 space-y-10">
 
-        <div className="grid md:grid-cols-2 gap-10 items-center">
+        {content?.image_url && (
 
-          {/* 🌿 IMAGEN */}
-          {content?.image_url && (
+          <img
+            src={content.image_url}
+            className="w-full rounded-3xl object-cover"
+          />
 
-            <img
-              src={content.image_url}
-              className="w-full rounded-3xl object-cover"
-            />
+        )}
 
-          )}
-
-          {/* 🌿 TEXTO LATERAL */}
-          <div className="space-y-6 text-gray-600 leading-relaxed">
-
-            {content?.side_text
-              ?.split("\n")
-              .map((paragraph, index) => (
-
-                <p key={index}>
-                  {paragraph}
-                </p>
-
-              ))}
-
-          </div>
-
-        </div>
-
-        {/* 🌿 TEXTO PRINCIPAL */}
         <div className="max-w-3xl mx-auto space-y-6 text-center text-gray-600 leading-relaxed">
 
           {content?.main_text

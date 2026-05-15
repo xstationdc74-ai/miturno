@@ -14,21 +14,22 @@ export default function CaliNav() {
         Mundo Cali
       </Link>
 
-      <Link href="/cali/espacio" className="text-gray-600 hover:text-black shrink-0">
+      <Link href="/cali/parcela11" className="text-gray-600 hover:text-black shrink-0">
         Parcela 11
       </Link>
 
-      <Link href="/cali/galeria" className="text-gray-600 hover:text-black shrink-0">
-        Galería
-      </Link>
+      
+<Link href="/cali/tienda" className="text-gray-600 hover:text-black shrink-0">
+  Tienda
+</Link>
 
-      <Link href="/cali/talleres" className="text-gray-600 hover:text-black shrink-0">
-        Talleres
-      </Link>
+      <Link href="/cali/experiencias" className="text-gray-600 hover:text-black shrink-0">
+  Experiencias
+</Link>
 
-      <Link href="/cali/eventos" className="text-gray-600 hover:text-black shrink-0">
-        Eventos
-      </Link>
+<Link href="/cali/galeria" className="text-gray-600 hover:text-black shrink-0">
+  Galeria
+</Link>
 
       <Link href="/cali/acerca" className="text-gray-600 hover:text-black shrink-0">
         Acerca de...

@@ -2,7 +2,7 @@ import "./globals.css"
 import "leaflet/dist/leaflet.css"
 
 export const metadata = {
-  title: "Bookly",
+  title: "Semilla Studio",
   description: "Simple booking app for small businesses",
 }
 

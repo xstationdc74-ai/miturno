@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import CaliNav from "@/components/CaliNav"
+import CaliNav from "@/components/cali/CaliNav"
 
 export default function CaliMundo() {
 

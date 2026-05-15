@@ -1,141 +1,184 @@
 "use client"
 
-import Link from "next/link"
-import CaliNav from "@/components/CaliNav"
+import CaliNav from "@/components/cali/CaliNav"
+import { useEffect, useMemo, useState } from "react"
+import { supabase } from "@/lib/supabase/client"
 
-type Piece = {
-  id: number
-  name: string
+type GalleryItem = {
+  id: string
+  title: string
   description: string
-  image: string
-  price?: string
+  image_url: string
+  tag: string
+  media_type: string
 }
 
-const pieces: Piece[] = [
-  {
-    id: 1,
-    name: "Textil natural",
-    description: "Teñido con pigmentos del bosque nativo",
-    image: "/cali-hero.jpg",
-    price: "$45.000"
-  },
-  {
-    id: 2,
-    name: "Tinte botánico",
-    description: "Proceso artesanal con fibras orgánicas",
-    image: "/cali-hero.jpg",
-    price: "$38.000"
-  },
-  {
-    id: 3,
-    name: "Pieza experimental",
-    description: "Exploración libre entre textura y color",
-    image: "/cali-hero.jpg",
-    price: "$52.000"
-  }
-]
+export default function CaliGaleria() {
 
-export default function CaliGaleria(){
+  const [items, setItems] = useState<GalleryItem[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const handleWhatsApp = (piece: Piece) => {
+  const [selectedTag, setSelectedTag] = useState("all")
 
-    const message = `Hola Cali 🌿
+  useEffect(() => {
 
-Estoy viendo tu galería y me encantó la pieza "${piece.name}"${piece.price ? ` por ${piece.price}` : ""}.
+    const loadGallery = async () => {
 
-¿Sigue disponible?`
+      const { data } = await supabase
+        .from("gallery")
+        .select("*")
+        .eq("business_id", "20ce3f03-7991-423e-8495-d90ed8b1acea")
+        .order("created_at", { ascending: false })
 
-    const url = `https://wa.me/5491124604472?text=${encodeURIComponent(message)}`
+      setItems(data || [])
 
-    window.open(url, "_blank")
+      setLoading(false)
+    }
+
+    loadGallery()
+
+  }, [])
+
+  const tags = useMemo(() => {
+
+    const uniqueTags = items
+      .map((item) => item.tag)
+      .filter(Boolean)
+
+    return [...new Set(uniqueTags)]
+
+  }, [items])
+
+  const filteredItems = useMemo(() => {
+
+    if (selectedTag === "all") {
+      return items
+    }
+
+    return items.filter(
+      (item) => item.tag === selectedTag
+    )
+
+  }, [items, selectedTag])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center text-gray-500 italic font-serif">
+        Cargando galería...
+      </div>
+    )
   }
 
   return (
 
     <div className="min-h-screen bg-white flex flex-col">
 
-      {/* 🌿 NAV GLOBAL */}
+      {/* 🌿 NAV */}
       <CaliNav />
 
       {/* 🌿 HEADER */}
-      <div className="text-center py-12 space-y-4">
+      <div className="text-center py-12 space-y-6">
 
-        {/* TÍTULO CON FONDO */}
         <div className="inline-block bg-[#7FA6C9]/30 backdrop-blur-sm px-6 py-2 rounded-xl">
+
           <h1 className="text-3xl font-serif italic text-gray-800">
             Galería
           </h1>
+
         </div>
 
-        {/* SUBTÍTULO */}
         <p className="text-lg md:text-xl font-serif italic text-gray-600">
-          Piezas únicas nacidas del bosque
+          Fragmentos del universo Cali
         </p>
+
+        {/* 🌿 FILTER */}
+        {tags.length > 0 && (
+
+          <div>
+
+            <select
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="border border-[#E8E5DF] rounded-2xl px-5 py-3 text-sm"
+            >
+
+              <option value="all">
+                Todo
+              </option>
+
+              {tags.map((tag) => (
+
+                <option
+                  key={tag}
+                  value={tag}
+                >
+                  {tag}
+                </option>
+
+              ))}
+
+            </select>
+
+          </div>
+
+        )}
 
       </div>
 
       {/* 🌿 GRID */}
-      <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-5xl mx-auto px-4 flex-1">
+      <div className="columns-1 sm:columns-2 md:columns-3 gap-6 px-4 max-w-6xl mx-auto w-full pb-20">
 
-        {pieces.map((p) => (
+        {filteredItems.map((item) => (
 
           <div
-            key={p.id}
-            className="bg-white rounded-xl overflow-hidden border hover:shadow-md transition"
+            key={item.id}
+            className="mb-6 break-inside-avoid overflow-hidden rounded-3xl bg-white"
           >
 
-            <div className="aspect-square bg-gray-100">
-              <img
-                src={p.image}
-                className="w-full h-full object-cover"
+            {item.media_type === "video" ? (
+
+              <video
+                src={item.image_url}
+                controls
+                className="w-full rounded-3xl"
               />
-            </div>
 
-            <div className="p-4 space-y-2">
+            ) : (
 
-              <div className="font-medium">
-                {p.name}
+              <img
+                src={item.image_url}
+                className="w-full rounded-3xl object-cover"
+              />
+
+            )}
+
+            {(item.title || item.description) && (
+
+              <div className="px-2 py-4 space-y-2">
+
+                {item.title && (
+
+                  <h2 className="font-serif italic text-xl text-gray-800">
+                    {item.title}
+                  </h2>
+
+                )}
+
+                {item.description && (
+
+                  <p className="text-sm text-gray-500 leading-relaxed">
+                    {item.description}
+                  </p>
+
+                )}
+
               </div>
 
-              <div className="text-sm text-gray-500">
-                {p.description}
-              </div>
-
-              {p.price && (
-                <div className="text-sm text-gray-600">
-                  {p.price}
-                </div>
-              )}
-
-              <button
-                onClick={() => handleWhatsApp(p)}
-                className="w-full mt-2 bg-[#7FA6C9] hover:bg-[#6B93B5] text-white py-2 rounded-lg text-sm transition"
-              >
-                Reservar pieza 🌿
-              </button>
-
-            </div>
+            )}
 
           </div>
 
         ))}
-
-      </div>
-
-      {/* 🌿 FOOTER */}
-      <div className="border-t py-10 text-center space-y-4 mt-10">
-
-        <p className="text-sm text-gray-500">
-          ¿Te gustaría una app para vos?
-        </p>
-
-        <a
-          href="https://wa.me/5491134490093text=Hola!%20👋%20Vi%20Cali%20y%20me%20encantó.%20Quisiera%20una%20app%20para%20mi%20proyecto."
-          target="_blank"
-          className="inline-block text-sm underline text-gray-700"
-        >
-          Escribinos por WhatsApp
-        </a>
 
       </div>
 
