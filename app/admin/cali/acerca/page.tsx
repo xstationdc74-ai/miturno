@@ -4,7 +4,8 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 
-const BUSINESS_ID = "20ce3f03-7991-423e-8495-d90ed8b1acea"
+const BUSINESS_ID =
+"20ce3f03-7991-423e-8495-d90ed8b1acea"
 
 export default function CaliAcercaAdmin() {
 
@@ -12,13 +13,21 @@ export default function CaliAcercaAdmin() {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
 
-  const [id, setId] = useState<string | null>(null)
+  const [id, setId] =
+    useState<string | null>(null)
 
-  const [heroTitle, setHeroTitle] = useState("")
-  const [heroSubtitle, setHeroSubtitle] = useState("")
-  const [mainText, setMainText] = useState("")
-  const [sideText, setSideText] = useState("")
-  const [imageUrl, setImageUrl] = useState("")
+  const [heroTitle, setHeroTitle] =
+    useState("")
+  const [heroSubtitle, setHeroSubtitle] =
+    useState("")
+  const [mainText, setMainText] =
+    useState("")
+  const [sideText, setSideText] =
+    useState("")
+  const [imageUrl, setImageUrl] =
+    useState("")
+  const [instagramUrl, setInstagramUrl] =
+    useState("")
 
   useEffect(() => {
 
@@ -39,6 +48,9 @@ export default function CaliAcercaAdmin() {
         setMainText(data.main_text || "")
         setSideText(data.side_text || "")
         setImageUrl(data.image_url || "")
+        setInstagramUrl(
+          data.instagram_url || ""
+        )
       }
 
       setLoading(false)
@@ -58,22 +70,27 @@ export default function CaliAcercaAdmin() {
 
     setUploading(true)
 
-    const fileName = `${Date.now()}-${file.name}`
+    const fileName =
+      `${Date.now()}-${file.name}`
 
-    const { data, error } = await supabase.storage
-      .from("business-images")
-      .upload(fileName, file)
+    const { data, error } =
+      await supabase.storage
+        .from("business-images")
+        .upload(fileName, file)
 
     if (error) {
+
       alert("Error subiendo imagen")
+
       setUploading(false)
+
       return
     }
 
-    const { data: publicUrl } = supabase
-      .storage
-      .from("business-images")
-      .getPublicUrl(data.path)
+    const { data: publicUrl } =
+      supabase.storage
+        .from("business-images")
+        .getPublicUrl(data.path)
 
     setImageUrl(publicUrl.publicUrl)
 
@@ -85,12 +102,19 @@ export default function CaliAcercaAdmin() {
     setSaving(true)
 
     const payload = {
+
       business_id: BUSINESS_ID,
+
       hero_title: heroTitle,
       hero_subtitle: heroSubtitle,
+
       main_text: mainText,
       side_text: sideText,
+
       image_url: imageUrl,
+
+      instagram_url:
+        instagramUrl
     }
 
     if (id) {
@@ -102,29 +126,24 @@ export default function CaliAcercaAdmin() {
 
     } else {
 
-      const { data } = await supabase
-        .from("about_content")
-        .insert(payload)
-        .select()
-        .single()
+      const { data } =
+        await supabase
+          .from("about_content")
+          .insert(payload)
+          .select()
+          .single()
 
-      if (data) {
+      if (data)
         setId(data.id)
-      }
     }
 
     setSaving(false)
 
-    alert("Acerca de actualizado 🌿")
+    alert("Acerca actualizado 🌿")
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF7] text-gray-500 italic font-serif">
-        Cargando contenido...
-      </div>
-    )
-  }
+  if (loading)
+    return <div>Cargando...</div>
 
   return (
 
@@ -132,100 +151,100 @@ export default function CaliAcercaAdmin() {
 
       <div className="max-w-4xl mx-auto space-y-10">
 
-        {/* 🌿 HEADER */}
-        <div className="space-y-5">
+        <Link
+          href="/admin/cali"
+          className="inline-block bg-[#7FA6C9] text-white px-4 py-2 rounded-xl"
+        >
+          ← Volver
+        </Link>
 
-          <div className="flex justify-center">
-
-            <Link
-              href="/admin/cali"
-              className="inline-block px-5 py-3 rounded-2xl text-sm bg-[#7FA6C9] hover:bg-[#6B93B5] text-white transition"
-            >
-              ← Volver al panel
-            </Link>
-
-          </div>
-
-          <div className="text-center space-y-3">
-
-            <p className="uppercase tracking-[0.3em] text-sm text-[#7FA6C9]">
-              Acerca de
-            </p>
-
-            <h1 className="text-4xl font-serif italic text-gray-800">
-              Editar relato editorial
-            </h1>
-
-          </div>
-
-        </div>
-
-        {/* 🌿 FORM */}
-        <div className="bg-white rounded-3xl border border-[#E8E5DF] p-8 space-y-6">
+        <div className="bg-white rounded-3xl p-8 space-y-6">
 
           <input
             value={heroTitle}
-            onChange={(e) => setHeroTitle(e.target.value)}
-            placeholder="Título principal"
+            onChange={(e)=>
+              setHeroTitle(
+                e.target.value
+              )
+            }
+            placeholder="Título"
             className="w-full border rounded-xl px-4 py-3"
           />
 
           <input
             value={heroSubtitle}
-            onChange={(e) => setHeroSubtitle(e.target.value)}
+            onChange={(e)=>
+              setHeroSubtitle(
+                e.target.value
+              )
+            }
             placeholder="Subtítulo"
             className="w-full border rounded-xl px-4 py-3"
           />
 
           <textarea
             value={mainText}
-            onChange={(e) => setMainText(e.target.value)}
+            onChange={(e)=>
+              setMainText(
+                e.target.value
+              )
+            }
             placeholder="Texto principal"
-            className="w-full border rounded-xl px-4 py-3 min-h-[180px]"
+            className="w-full border rounded-xl px-4 py-3"
           />
 
           <textarea
             value={sideText}
-            onChange={(e) => setSideText(e.target.value)}
+            onChange={(e)=>
+              setSideText(
+                e.target.value
+              )
+            }
             placeholder="Texto lateral"
-            className="w-full border rounded-xl px-4 py-3 min-h-[180px]"
+            className="w-full border rounded-xl px-4 py-3"
           />
 
-          {/* 🌿 IMAGE */}
-          <div className="space-y-4">
+          <input
+            value={instagramUrl}
+            onChange={(e)=>
+              setInstagramUrl(
+                e.target.value
+              )
+            }
+            placeholder="https://instagram..."
+            className="w-full border rounded-xl px-4 py-3"
+          />
 
-            {imageUrl && (
+          {imageUrl && (
 
-              <img
-                src={imageUrl}
-                className="w-full h-[320px] object-cover rounded-2xl border"
-              />
+            <img
+              src={imageUrl}
+              className="rounded-2xl"
+            />
 
-            )}
+          )}
 
-            <label className="inline-block cursor-pointer bg-[#7FA6C9] hover:bg-[#6B93B5] text-white px-5 py-3 rounded-2xl transition text-sm">
+          <label>
 
-              {uploading ? "Subiendo..." : "Subir imagen 🌿"}
+            Subir imagen 🌿
 
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleUpload}
-                className="hidden"
-              />
+            <input
+              type="file"
+              hidden
+              onChange={handleUpload}
+            />
 
-            </label>
-
-          </div>
+          </label>
 
           <button
             onClick={handleSave}
-            disabled={saving}
-            className="w-full bg-[#7FA6C9] hover:bg-[#6B93B5] text-white py-4 rounded-2xl transition"
+            className="w-full bg-[#7FA6C9] text-white py-4 rounded-xl"
           >
+
             {saving
               ? "Guardando..."
-              : "Guardar cambios 🌿"}
+              : "Guardar 🌿"}
+
           </button>
 
         </div>

@@ -5,26 +5,42 @@ import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase/client"
 
 type AboutContent = {
+
   hero_title: string
   hero_subtitle: string
+
   main_text: string
   side_text: string
+
   image_url: string
+
+  instagram_url: string
 }
 
 export default function CaliAcerca() {
 
-  const [content, setContent] = useState<AboutContent | null>(null)
+  const [content,
+    setContent] =
+    useState<AboutContent | null>(null)
+
+  const [copied,
+    setCopied] =
+    useState(false)
 
   useEffect(() => {
 
-    const loadContent = async () => {
+    const loadContent =
+      async () => {
 
-      const { data } = await supabase
-        .from("about_content")
-        .select("*")
-        .eq("business_id", "20ce3f03-7991-423e-8495-d90ed8b1acea")
-        .single()
+      const { data } =
+        await supabase
+          .from("about_content")
+          .select("*")
+          .eq(
+            "business_id",
+            "20ce3f03-7991-423e-8495-d90ed8b1acea"
+          )
+          .single()
 
       setContent(data)
     }
@@ -33,92 +49,187 @@ export default function CaliAcerca() {
 
   }, [])
 
+  const copyLink =
+    async () => {
+
+    await navigator
+      .clipboard
+      .writeText(
+        window.location.origin
+        + "/cali"
+      )
+
+    setCopied(true)
+
+    setTimeout(
+      () => setCopied(false),
+      2000
+    )
+  }
+
   return (
 
-    <div className="min-h-screen bg-white flex flex-col">
+<div className="min-h-screen bg-white flex flex-col">
 
-      {/* 🌿 NAV */}
-      <CaliNav />
+<CaliNav />
 
-      {/* 🌿 HERO */}
-      <div className="max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
+<div className="max-w-4xl mx-auto px-6 py-16 text-center space-y-6">
 
-        <h1 className="text-3xl md:text-4xl font-serif italic text-[#7FA6C9]">
-          {content?.hero_title || "Acerca de..."}
-        </h1>
+<h1 className="text-3xl md:text-4xl font-serif italic text-[#7FA6C9]">
 
-        <p className="text-lg md:text-xl font-serif italic text-gray-600">
-          {content?.hero_subtitle || "Un vínculo entre el arte, el bosque y la experiencia"}
-        </p>
+{content?.hero_title
+|| "Acerca de..."}
 
-      </div>
+</h1>
 
-      {/* 🌿 CONTENIDO */}
-      <div className="max-w-5xl mx-auto px-6 pb-20 space-y-10">
+<p className="text-lg md:text-xl font-serif italic text-gray-600">
 
-        <div className="grid md:grid-cols-2 gap-10 items-center">
+{content?.hero_subtitle
+|| "Un vínculo..."}
 
-          {/* 🌿 IMAGEN */}
-          {content?.image_url && (
+</p>
 
-            <img
-              src={content.image_url}
-              className="w-full rounded-3xl object-cover"
-            />
+</div>
 
-          )}
 
-          {/* 🌿 TEXTO LATERAL */}
-          <div className="space-y-6 text-gray-600 leading-relaxed">
+<div className="max-w-5xl mx-auto px-6 pb-20 space-y-10">
 
-            {content?.side_text
-              ?.split("\n")
-              .map((paragraph, index) => (
+<div className="grid md:grid-cols-2 gap-10 items-center">
 
-                <p key={index}>
-                  {paragraph}
-                </p>
+{content?.image_url && (
 
-              ))}
+<img
+src={content.image_url}
+className="w-full rounded-3xl object-cover"
+/>
 
-          </div>
+)}
 
-        </div>
+<div className="space-y-6 text-gray-600 leading-relaxed">
 
-        {/* 🌿 TEXTO PRINCIPAL */}
-        <div className="max-w-3xl mx-auto space-y-6 text-center text-gray-600 leading-relaxed">
+{content?.side_text
+?.split("\n")
+.map((p,i)=>(
 
-          {content?.main_text
-            ?.split("\n")
-            .map((paragraph, index) => (
+<p key={i}>{p}</p>
 
-              <p key={index}>
-                {paragraph}
-              </p>
+))}
 
-            ))}
+</div>
 
-        </div>
+</div>
 
-      </div>
 
-      {/* 🌿 FOOTER */}
-      <div className="border-t py-10 text-center space-y-4 mt-10">
+<div className="max-w-3xl mx-auto space-y-6 text-center text-gray-600 leading-relaxed">
 
-        <p className="text-sm text-gray-500">
-          ¿Te gustaría una app para vos?
-        </p>
+{content?.main_text
+?.split("\n")
+.map((p,i)=>(
 
-        <a
-          href="https://wa.me/5491134490093?text=Hola!%20👋%20Vi%20Cali%20y%20me%20encantó.%20Quisiera%20una%20app%20para%20mi%20proyecto."
-          target="_blank"
-          className="inline-block text-sm underline text-gray-700"
-        >
-          Escribinos por WhatsApp
-        </a>
+<p key={i}>{p}</p>
 
-      </div>
+))}
 
-    </div>
-  )
+</div>
+
+
+{/* 🌿 DIFUSIÓN */}
+
+<div className="
+pt-10
+text-center
+
+flex
+flex-col
+
+items-center
+
+gap-4
+">
+
+<p className="italic text-gray-500">
+
+Compartir Cali 🌿
+
+</p>
+
+
+{content?.instagram_url && (
+
+<a
+href={content.instagram_url}
+target="_blank"
+className="
+inline-block
+bg-[#7FA6C9]
+hover:bg-[#6B93B5]
+text-white
+px-6
+py-3
+rounded-2xl
+transition
+text-sm
+"
+>
+
+Instagram 🌿
+
+</a>
+
+)}
+
+
+<button
+onClick={copyLink}
+
+className="
+bg-[#7FA6C9]
+hover:bg-[#6B93B5]
+text-white
+
+px-6
+py-3
+
+rounded-2xl
+
+transition
+
+text-sm
+"
+>
+
+{copied
+? "Enlace copiado 🌿"
+: "Copiar enlace"}
+
+</button>
+
+</div>
+
+</div>
+
+
+<div className="border-t py-10 text-center space-y-4 mt-10">
+
+<p className="text-sm text-gray-500">
+
+¿Te gustaría una app para vos?
+
+</p>
+
+<a
+href="https://wa.me/5491134490093?text=Hola!"
+target="_blank"
+className="underline text-gray-700"
+>
+
+Escribinos por WhatsApp
+
+</a>
+
+</div>
+
+</div>
+
+)
 }
