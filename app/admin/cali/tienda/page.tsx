@@ -9,6 +9,8 @@ const BUSINESS_ID = "20ce3f03-7991-423e-8495-d90ed8b1acea"
 type Product = {
   id: string
   name: string
+  short_description: string
+  full_description: string
   description: string
   image_url: string
   price: number
@@ -25,9 +27,10 @@ export default function CaliTiendaAdmin() {
   const [editingId, setEditingId] = useState<string | null>(null)
 
   const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
+  const [fullDescription, setFullDescription] = useState("")
   const [price, setPrice] = useState("")
   const [imageUrl, setImageUrl] = useState("")
+  const [shortDescription, setShortDescription] = useState("")
 
   const loadProducts = async () => {
 
@@ -40,6 +43,8 @@ export default function CaliTiendaAdmin() {
     const formatted = (data || []).map((p: any) => ({
       id: p.id,
       name: p.name,
+      short_description: p.short_description || "",
+      full_description: p.full_description || "",
       description: p.category || "",
       image_url: p.image_url || "/cali-hero.jpg",
       price: p.price || 0,
@@ -91,9 +96,10 @@ export default function CaliTiendaAdmin() {
     setEditingId(null)
 
     setName("")
-    setDescription("")
+    setFullDescription("")
     setPrice("")
     setImageUrl("")
+    setShortDescription("")
   }
 
   const handleSave = async () => {
@@ -103,7 +109,8 @@ export default function CaliTiendaAdmin() {
     const payload = {
       business_id: BUSINESS_ID,
       name,
-      category: description,
+      short_description: shortDescription,
+      full_description: fullDescription,
       image_url: imageUrl,
       price: Number(price),
     }
@@ -141,7 +148,8 @@ export default function CaliTiendaAdmin() {
     setEditingId(product.id)
 
     setName(product.name || "")
-    setDescription(product.description || "")
+    setShortDescription(product.short_description || "")
+    setFullDescription(product.full_description || "")
     setPrice(String(product.price || ""))
     setImageUrl(product.image_url || "")
 
@@ -219,9 +227,16 @@ export default function CaliTiendaAdmin() {
             className="w-full border rounded-xl px-4 py-3"
           />
 
+<textarea
+  value={shortDescription}
+  onChange={(e) => setShortDescription(e.target.value)}
+  placeholder="Descripción corta"
+  className="w-full border rounded-xl px-4 py-3 min-h-[80px]"
+/>
+
           <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            value={fullDescription}
+            onChange={(e) => setFullDescription(e.target.value)}
             placeholder="Descripción"
             className="w-full border rounded-xl px-4 py-3 min-h-[120px]"
           />

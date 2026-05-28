@@ -2,11 +2,14 @@
 
 import CaliNav from "@/components/cali/CaliNav"
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { supabase } from "@/lib/supabase/client"
 
 type Piece = {
   id: string
+  slug: string
   name: string
+  short_description: string
   description: string
   image_url: string
   price: number
@@ -27,13 +30,15 @@ export default function CaliTienda() {
         .eq("business_id", "20ce3f03-7991-423e-8495-d90ed8b1acea")
         .order("created_at", { ascending: false })
 
-      const formatted = (data || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        description: p.category || "",
-        image_url: p.image_url || "/cali-hero.jpg",
-        price: p.price || 0,
-      }))
+     const formatted = (data || []).map((p: any) => ({
+  id: p.id,
+  slug: p.slug || "",
+  name: p.name,
+  short_description: p.short_description || "",
+  description: p.description || "",
+  image_url: p.image_url || "/cali-hero.jpg",
+  price: p.price || 0,
+}))
 
       setPieces(formatted)
 
@@ -103,24 +108,30 @@ Estoy viendo tu tienda y me encantó la pieza:
             className="bg-white rounded-xl overflow-hidden border hover:shadow-md transition"
           >
 
-            <div className="aspect-square bg-gray-100">
+            <Link href={`/cali/tienda/${p.slug}`}>
 
-              <img
-                src={p.image_url}
-                className="w-full h-full object-cover"
-              />
+  <div className="aspect-square bg-gray-100 cursor-pointer">
 
-            </div>
+    <img
+      src={p.image_url || "/cali-hero.jpg"}
+      className="w-full h-full object-cover hover:scale-[1.02] transition"
+    />
+
+  </div>
+
+</Link>
 
             <div className="p-4 space-y-3">
 
-              <div className="font-medium text-gray-800">
-                {p.name}
-              </div>
-
-              <div className="text-sm text-gray-500">
-                {p.description}
-              </div>
+              <Link
+  href={`/cali/tienda/${p.slug}`}
+  className="block font-medium text-gray-800 hover:text-[#7FA6C9] transition"
+>
+  {p.name}
+</Link>
+<div className="text-sm text-gray-500">
+  {p.short_description || p.description}
+</div>
 
               <div className="text-sm text-[#7FA6C9]">
                 ${p.price}
