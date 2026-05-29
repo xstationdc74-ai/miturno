@@ -66,6 +66,26 @@ Estoy viendo tu tienda y me encantó la pieza:
     window.open(url, "_blank")
   }
 
+  const handleShare = async (piece: Piece) => {
+
+  const url = `${window.location.origin}/cali/tienda/${piece.slug}`
+
+  if (navigator.share) {
+
+    await navigator.share({
+      title: piece.name,
+      text: `${piece.name} · Cali Patagonia 🌿`,
+      url,
+    })
+
+  } else {
+
+    await navigator.clipboard.writeText(url)
+
+    alert("Link copiado ✨")
+  }
+}
+
   if (loading) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-gray-500 italic font-serif">
@@ -129,6 +149,7 @@ Estoy viendo tu tienda y me encantó la pieza:
 >
   {p.name}
 </Link>
+
 <div className="text-sm text-gray-500">
   {p.short_description || p.description}
 </div>
@@ -137,12 +158,41 @@ Estoy viendo tu tienda y me encantó la pieza:
                 ${p.price}
               </div>
 
-              <button
-                onClick={() => handleWhatsApp(p)}
-                className="w-full mt-2 bg-[#7FA6C9] hover:bg-[#6B93B5] text-white py-2 rounded-xl text-sm transition"
-              >
-                Reservar pieza 🌿
-              </button>
+             <div className="flex gap-2">
+
+  <button
+    onClick={() => handleWhatsApp(p)}
+    className="flex-1 mt-2 bg-[#7FA6C9] hover:bg-[#6B93B5] text-white py-2 rounded-xl text-sm transition"
+  >
+    Reservar 🌿
+  </button>
+
+  <button
+    onClick={() => handleShare(p)}
+    className="mt-2 px-4 border border-[#7FA6C9] text-[#7FA6C9] rounded-xl text-sm hover:bg-[#7FA6C9]/10 transition"
+  >
+   
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="18"
+    height="18"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <line x1="8.7" y1="10.7" x2="15.3" y2="6.3" />
+    <line x1="8.7" y1="13.3" x2="15.3" y2="17.7" />
+  </svg>
+</button>
+  
+
+</div>
 
             </div>
 
