@@ -21,10 +21,13 @@ export default function GroupRealtime({
   groupId,
 }: Props) {
   const [participants, setParticipants] = useState<
-    Participant[]
-  >([]);
+  Participant[]
+>([]);
 
-  const [myToken, setMyToken] =
+const [myToken, setMyToken] =
+  useState<string | null>(null);
+
+const [editingParticipantId, setEditingParticipantId] =
   useState<string | null>(null);
 
   useEffect(() => {
@@ -112,9 +115,48 @@ useEffect(() => {
         {participant.arrival_to?.slice(0, 5)}
       </span>
 
-      <button className="text-sm underline text-left">
-        Actualizar horario estimado de llegada
-      </button>
+      <button
+  onClick={() =>
+    setEditingParticipantId(
+      participant.id
+    )
+  }
+  className="text-sm underline text-left"
+>
+  Actualizar horario estimado de llegada
+</button>
+
+
+{editingParticipantId ===
+  participant.id && (
+  <div className="flex gap-2 mt-2">
+    <input
+      type="time"
+      defaultValue={
+        participant.arrival_from?.slice(
+          0,
+          5
+        )
+      }
+      className="border rounded p-2"
+    />
+
+    <input
+      type="time"
+      defaultValue={
+        participant.arrival_to?.slice(
+          0,
+          5
+        )
+      }
+      className="border rounded p-2"
+    />
+
+    <button className="border rounded px-3">
+      Guardar
+    </button>
+  </div>
+)}
     </>
   )}
 </div>
