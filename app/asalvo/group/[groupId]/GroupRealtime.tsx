@@ -129,33 +129,33 @@ useEffect(() => {
 
 {editingParticipantId ===
   participant.id && (
-  <div className="flex gap-2 mt-2">
-    <input
-      type="time"
-      defaultValue={
-        participant.arrival_from?.slice(
-          0,
-          5
-        )
-      }
-      className="border rounded p-2"
-    />
+ <div className="flex gap-2 mt-2">
+  <input
+    type="time"
+    defaultValue={
+      participant.arrival_from?.slice(
+        0,
+        5
+      )
+    }
+    className="border rounded p-2"
+  />
 
-    <input
-      type="time"
-      defaultValue={
-        participant.arrival_to?.slice(
-          0,
-          5
-        )
-      }
-      className="border rounded p-2"
-    />
+  <input
+    type="time"
+    defaultValue={
+      participant.arrival_to?.slice(
+        0,
+        5
+      )
+    }
+    className="border rounded p-2"
+  />
 
-    <button className="border rounded px-3">
-      Guardar
-    </button>
-  </div>
+  <button className="border rounded px-3">
+    Guardar
+  </button>
+</div>
 )}
     </>
   )}
