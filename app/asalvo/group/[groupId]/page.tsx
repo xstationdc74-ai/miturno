@@ -4,6 +4,7 @@ import GroupActions from "./GroupActions";
 import GroupRealtime from "./GroupRealtime";
 import ShareInvite from "./ShareInvite";
 import ReminderButton from "./ReminderButton";
+import GroupMessages from "./GroupMessages";
 
 type Props = {
   params: Promise<{
@@ -41,6 +42,8 @@ export default async function GroupPage({
       <ShareInvite inviteToken={group.invite_token} />
 
       <GroupRealtime groupId={groupId} />
+
+      <GroupMessages groupId={groupId} />
 
       <GroupActions />
 

@@ -11,6 +11,7 @@ type Participant = {
   participant_token: string;
   arrival_from: string | null;
   arrival_to: string | null;
+  arrival_to_period: string | null;
 };
 
 type Props = {
@@ -29,6 +30,45 @@ const [myToken, setMyToken] =
 
 const [editingParticipantId, setEditingParticipantId] =
   useState<string | null>(null);
+
+  const [arrivalFrom, setArrivalFrom] =
+  useState("");
+
+  const [arrivalToPeriod, setArrivalToPeriod] =
+  useState("PM");
+
+ 
+const [arrivalTo, setArrivalTo] =
+  useState("");
+
+  async function handleSaveArrival(
+  participantToken: string
+) {
+  const response = await fetch(
+    "/api/asalvo/update-arrival",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+      body: JSON.stringify({
+        participantToken,
+        arrivalFrom,
+        arrivalTo,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    alert(
+      "No se pudo actualizar el horario"
+    );
+    return;
+  }
+
+  setEditingParticipantId(null);
+}
 
   useEffect(() => {
   const token = localStorage.getItem(
@@ -116,11 +156,21 @@ useEffect(() => {
       </span>
 
       <button
-  onClick={() =>
+  onClick={() => {
     setEditingParticipantId(
       participant.id
-    )
-  }
+    );
+
+    setArrivalFrom(
+      participant.arrival_from?.slice(0, 5) ??
+        ""
+    );
+
+    setArrivalTo(
+      participant.arrival_to?.slice(0, 5) ??
+        ""
+    );
+  }}
   className="text-sm underline text-left"
 >
   Actualizar horario estimado de llegada
@@ -131,30 +181,49 @@ useEffect(() => {
   participant.id && (
   <div className="flex flex-col gap-2 mt-2">
     <input
-      type="time"
-      defaultValue={
-        participant.arrival_from?.slice(
-          0,
-          5
-        )
-      }
-      className="border rounded p-2"
-    />
+  type="time"
+  value={arrivalFrom}
+  onChange={(e) =>
+    setArrivalFrom(e.target.value)
+  }
+  className="border rounded p-2"
+/>
+
+<select
+  value={arrivalToPeriod}
+  onChange={(e) =>
+    setArrivalToPeriod(e.target.value)
+  }
+  className="border rounded p-2"
+>
+  <option value="PM">
+    Noche (PM)
+  </option>
+
+  <option value="AM">
+    Madrugada (AM)
+  </option>
+</select>
 
     <input
-      type="time"
-      defaultValue={
-        participant.arrival_to?.slice(
-          0,
-          5
-        )
-      }
-      className="border rounded p-2"
-    />
+  type="time"
+  value={arrivalTo}
+  onChange={(e) =>
+    setArrivalTo(e.target.value)
+  }
+  className="border rounded p-2"
+/>
 
-    <button className="border rounded p-2">
-      Guardar
-    </button>
+   <button
+  onClick={() =>
+    handleSaveArrival(
+      participant.participant_token
+    )
+  }
+  className="border rounded p-2"
+>
+  Guardar
+</button>
   </div>
 )}
     </>
