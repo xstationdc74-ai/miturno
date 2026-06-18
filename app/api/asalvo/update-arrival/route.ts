@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       participantToken,
       arrivalFrom,
       arrivalTo,
+      arrivalToPeriod,
     } = body;
 
     const { error } =
@@ -17,6 +18,7 @@ export async function POST(request: Request) {
         .update({
           arrival_from: arrivalFrom,
           arrival_to: arrivalTo,
+          arrival_to_period: arrivalToPeriod,
         })
         .eq(
           "participant_token",

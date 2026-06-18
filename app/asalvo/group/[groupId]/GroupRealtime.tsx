@@ -56,6 +56,7 @@ const [arrivalTo, setArrivalTo] =
         participantToken,
         arrivalFrom,
         arrivalTo,
+        arrivalToPeriod,
       }),
     }
   );

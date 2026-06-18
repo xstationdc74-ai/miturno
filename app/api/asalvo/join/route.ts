@@ -34,6 +34,12 @@ export async function POST(request: Request) {
   group_id: group.id,
   nickname,
   status: "pending",
+  automation_stage: "waiting",
+  arrival_date: new Date().toISOString().split("T")[0],
+  timezone:
+    Intl.DateTimeFormat()
+      .resolvedOptions()
+      .timeZone,
   arrival_from: fromTime,
   arrival_to: toTime,
 })
