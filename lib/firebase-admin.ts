@@ -1,12 +1,25 @@
-import { getApps, initializeApp, cert } from "firebase-admin/app";
-import { getMessaging } from "firebase-admin/messaging";
+import {
+  getApps,
+  initializeApp,
+  cert,
+} from "firebase-admin/app";
 
-import serviceAccount from "@/secrets/asalvo-app-firebase-adminsdk-fbsvc-c48baf03d4.json";
+import { getMessaging } from "firebase-admin/messaging";
 
 const app =
   getApps().length === 0
     ? initializeApp({
-        credential: cert(serviceAccount as any),
+        credential: cert({
+          projectId:
+            process.env.FIREBASE_PROJECT_ID,
+          clientEmail:
+            process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey:
+            process.env.FIREBASE_PRIVATE_KEY?.replace(
+              /\\n/g,
+              "\n"
+            ),
+        }),
       })
     : getApps()[0];
 
