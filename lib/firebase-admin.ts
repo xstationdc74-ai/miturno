@@ -6,6 +6,22 @@ import {
 
 import { getMessaging } from "firebase-admin/messaging";
 
+console.log(
+  "FIREBASE PROJECT:",
+  process.env.FIREBASE_PROJECT_ID
+);
+
+console.log(
+  "FIREBASE CLIENT:",
+  process.env.FIREBASE_CLIENT_EMAIL
+);
+
+console.log(
+  "PRIVATE KEY EXISTS:",
+  !!process.env.FIREBASE_PRIVATE_KEY
+);
+
+
 const app =
   getApps().length === 0
     ? initializeApp({
