@@ -21,6 +21,13 @@ console.log(
   !!process.env.FIREBASE_PRIVATE_KEY
 );
 
+console.log(
+  "PRIVATE KEY START:",
+  process.env.FIREBASE_PRIVATE_KEY?.substring(
+    0,
+    40
+  )
+);
 
 const app =
   getApps().length === 0
