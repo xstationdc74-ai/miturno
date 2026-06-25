@@ -107,8 +107,9 @@ export default function GroupActions() {
         data
       );
     } catch (error) {
-      console.error(error);
-    }
+  console.error(error);
+  alert(String(error));
+}
   }
 
   if (!participantToken) {
