@@ -52,6 +52,11 @@ alert("PERMISSION: " + result);
       const messaging =
         await getMessagingInstance();
 
+        alert(
+  "MESSAGING: " +
+    (messaging ? "OK" : "NULL")
+);
+
       console.log(
         "MESSAGING INSTANCE:",
         messaging
