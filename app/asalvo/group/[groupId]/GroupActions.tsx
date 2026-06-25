@@ -72,6 +72,8 @@ alert("PERMISSION: " + result);
      const registration =
   await navigator.serviceWorker.ready;
 
+alert("REGISTRATION OK");
+
 const firebaseToken =
   await getToken(
     messaging,
