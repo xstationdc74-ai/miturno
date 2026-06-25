@@ -30,14 +30,18 @@ export async function GET() {
     }
 
     const messageId =
-      await firebaseMessaging.send({
-        token: device.device_token,
-        notification: {
-          title: "A Salvo! 🏎️💚",
-          body:
-            "Si estás leyendo esto... acabamos de cruzar la meta 🚀",
-        },
-      });
+  await firebaseMessaging.send({
+    token: device.device_token,
+    notification: {
+      title: "A Salvo! 🏎️💚",
+      body: "Prueba Android",
+    },
+    webpush: {
+      notification: {
+        icon: "/icons/icon-192x192.png",
+      },
+    },
+  });
 
     return NextResponse.json({
       success: true,
