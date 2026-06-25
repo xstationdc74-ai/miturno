@@ -35,15 +35,7 @@ export default function GroupActions() {
       const result =
         await Notification.requestPermission();
 
-
-alert("PERMISSION: " + result);
-
       setPermission(result);
-
-      console.log(
-        "Notification permission:",
-        result
-      );
 
       if (result !== "granted") {
         return;
@@ -52,51 +44,23 @@ alert("PERMISSION: " + result);
       const messaging =
         await getMessagingInstance();
 
-        alert(
-  "MESSAGING: " +
-    (messaging ? "OK" : "NULL")
-);
-
-      console.log(
-        "MESSAGING INSTANCE:",
-        messaging
-      );
-
       if (!messaging) {
-        console.log(
-          "Firebase Messaging no soportado"
-        );
         return;
       }
 
-     const registrations =
-  await navigator.serviceWorker.getRegistrations();
+      const registrations =
+        await navigator.serviceWorker.getRegistrations();
 
-alert(
-  "Registrations: " +
-    registrations.length
-);
-
-const firebaseToken =
-  await getToken(
-    messaging,
-    {
-      vapidKey:
-        "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
-      serviceWorkerRegistration:
-  registrations[0],
-    }
-  );
-
-      console.log(
-        "FIREBASE TOKEN:",
-        firebaseToken
-      );
-
-alert(
-  "TOKEN:\n" +
-    firebaseToken.substring(0, 40)
-);
+      const firebaseToken =
+        await getToken(
+          messaging,
+          {
+            vapidKey:
+              "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
+            serviceWorkerRegistration:
+              registrations[0],
+          }
+        );
 
       if (
         !firebaseToken ||
@@ -105,7 +69,7 @@ alert(
         return;
       }
 
-      const response = await fetch(
+      await fetch(
         "/api/asalvo/register-device",
         {
           method: "POST",
@@ -121,18 +85,9 @@ alert(
           }),
         }
       );
-
-      const data =
-        await response.json();
-
-      console.log(
-        "REGISTER DEVICE:",
-        data
-      );
     } catch (error) {
-  console.error(error);
-  alert(String(error));
-}
+      console.error(error);
+    }
   }
 
   if (!participantToken) {
@@ -146,10 +101,7 @@ alert(
       />
 
       <button
-        onClick={() => {
-  alert("CLICK");
-  enableNotifications();
-}}
+        onClick={enableNotifications}
         className="bg-blue-600 text-white px-4 py-2 rounded"
       >
         🔔 Activar notificaciones
