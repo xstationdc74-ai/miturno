@@ -18,3 +18,23 @@ firebase.initializeApp({
 
 const messaging =
   firebase.messaging();
+
+messaging.onBackgroundMessage(
+  (payload) => {
+    console.log(
+      "[firebase-messaging-sw] Mensaje recibido:",
+      payload
+    );
+
+    self.registration.showNotification(
+      payload.notification?.title ||
+        "A Salvo!",
+      {
+        body:
+          payload.notification?.body ||
+          "",
+        icon: "/icons/icon-192x192.png",
+      }
+    );
+  }
+);
