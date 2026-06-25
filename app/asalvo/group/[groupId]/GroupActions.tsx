@@ -123,7 +123,10 @@ export default function GroupActions() {
       />
 
       <button
-        onClick={enableNotifications}
+        onClick={() => {
+  alert("CLICK");
+  enableNotifications();
+}}
         className="bg-blue-600 text-white px-4 py-2 rounded"
       >
         🔔 Activar notificaciones
