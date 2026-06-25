@@ -70,9 +70,13 @@ alert("PERMISSION: " + result);
       }
 
      const registration =
-  await navigator.serviceWorker.ready;
+  await navigator.serviceWorker.getRegistration();
 
-alert("REGISTRATION OK");
+alert(
+  registration
+    ? "REGISTRATION FOUND"
+    : "NO REGISTRATION"
+);
 
 const firebaseToken =
   await getToken(
