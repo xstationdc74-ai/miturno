@@ -35,6 +35,9 @@ export default function GroupActions() {
       const result =
         await Notification.requestPermission();
 
+
+alert("PERMISSION: " + result);
+
       setPermission(result);
 
       console.log(
