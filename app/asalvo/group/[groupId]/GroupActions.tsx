@@ -69,14 +69,19 @@ alert("PERMISSION: " + result);
         return;
       }
 
-      const firebaseToken =
-        await getToken(
-          messaging,
-          {
-            vapidKey:
-              "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
-          }
-        );
+     const registration =
+  await navigator.serviceWorker.ready;
+
+const firebaseToken =
+  await getToken(
+    messaging,
+    {
+      vapidKey:
+        "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
+      serviceWorkerRegistration:
+        registration,
+    }
+  );
 
       console.log(
         "FIREBASE TOKEN:",
