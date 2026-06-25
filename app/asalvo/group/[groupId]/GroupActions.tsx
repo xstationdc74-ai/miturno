@@ -69,13 +69,12 @@ alert("PERMISSION: " + result);
         return;
       }
 
-     const registration =
-  await navigator.serviceWorker.getRegistration();
+     const registrations =
+  await navigator.serviceWorker.getRegistrations();
 
 alert(
-  registration
-    ? "REGISTRATION FOUND"
-    : "NO REGISTRATION"
+  "Registrations: " +
+    registrations.length
 );
 
 const firebaseToken =
@@ -85,7 +84,7 @@ const firebaseToken =
       vapidKey:
         "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
       serviceWorkerRegistration:
-        registration,
+  registrations[0],
     }
   );
 
