@@ -83,6 +83,11 @@ alert("PERMISSION: " + result);
         firebaseToken
       );
 
+alert(
+  "TOKEN:\n" +
+    firebaseToken.substring(0, 40)
+);
+
       if (
         !firebaseToken ||
         !participantToken
