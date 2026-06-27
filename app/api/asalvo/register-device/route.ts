@@ -29,6 +29,21 @@ export async function POST(
       await createSupabaseServerClient();
 
     const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Usuario no autenticado",
+        },
+        { status: 401 }
+      );
+    }
+
+    const {
       data: participant,
       error: participantError,
     } = await supabase
@@ -54,14 +69,41 @@ export async function POST(
       );
     }
 
-    const { error } = await supabase
-      .from("push_devices")
-      .insert({
-        participant_id:
-          participant.id,
-        device_token: deviceToken,
-        platform,
-      });
+   const { data: existingDevice } = await supabase
+  .from("push_devices")
+  .select("id")
+  .eq("device_token", deviceToken)
+  .maybeSingle();
+
+let error = null;
+
+if (existingDevice) {
+  const { error: updateError } = await supabase
+    .from("push_devices")
+    .update({
+      participant_id: participant.id,
+      user_id: user.id,
+      platform,
+      active: true,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", existingDevice.id);
+
+  error = updateError;
+} else {
+  const { error: insertError } = await supabase
+    .from("push_devices")
+    .insert({
+      participant_id: participant.id,
+      user_id: user.id,
+      device_token: deviceToken,
+      platform,
+      active: true,
+      updated_at: new Date().toISOString(),
+    });
+
+  error = insertError;
+}
 
     if (error) {
       return NextResponse.json(
@@ -76,7 +118,8 @@ export async function POST(
     return NextResponse.json({
       success: true,
     });
-  } catch (error) {
+
+  } catch {
     return NextResponse.json(
       {
         success: false,

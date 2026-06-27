@@ -1,137 +1,139 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function ASalvoPage() {
-  const [groupName, setGroupName] = useState("Bosque Verde");
-  const [nickname, setNickname] = useState("Chicolisto");
-  const [fromTime, setFromTime] = useState("22:00");
-  const [toTime, setToTime] = useState("22:20");
+import AppLayout from "@/components/asalvo/layout/AppLayout";
+import Header from "@/components/asalvo/layout/Header";
+import BottomNavigation from "@/components/asalvo/layout/BottomNavigation";
+
+import Section from "@/components/asalvo/ui/Section";
+import Button from "@/components/asalvo/ui/Button";
+
+import GroupCard from "@/components/asalvo/features/GroupCard";
+
+type Profile = {
+  id: string;
+  full_name: string | null;
+  email: string |null;
+  avatar_url: string | null;
+};
+
+type Group = {
+  id: string;
+  name: string;
+  status: string;
+  nickname: string;
+};
+
+type HomeData = {
+  profile: Profile;
+  groups: Group[];
+};
+
+export default function AsalvoPage() {
+
   const router = useRouter();
 
-  const [shareLink, setShareLink] = useState("");
+  const [home, setHome] =
+    useState<HomeData | null>(null);
 
-  async function handleCreateGroup() {
-  try {
-    const response = await fetch("/api/asalvo/groups", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-  groupName,
-  nickname,
-  fromTime,
-  toTime,
-}),
-    });
+  const [loading, setLoading] =
+    useState(true);
 
-    const result = await response.json();
+  useEffect(() => {
 
-    if (!response.ok) {
-      throw new Error(result.error);
+    async function loadHome() {
+
+      const response =
+        await fetch("/api/asalvo/home");
+
+      if (!response.ok) {
+        router.push("/login");
+        return;
+      }
+
+      const data =
+        await response.json();
+
+      setHome(data);
+
+      setLoading(false);
+
     }
 
-    localStorage.setItem(
-  "asalvo_participant_token",
-  result.participantToken
-);
+    loadHome();
 
-    router.push(
-  `/asalvo/group/${result.groupId}`
-);
+  }, [router]);
 
-  } catch (error) {
-    console.error(error);
-    alert("No se pudo crear el grupo");
-  }
-}
+  if (loading || !home) {
 
-  async function handleShare() {
-    if (!shareLink) return;
+    return (
+      <AppLayout>
 
-    if (navigator.share) {
-      await navigator.share({
-        title: "A Salvo!",
-        text: `Te invito a un grupo de A Salvo!`,
-        url: shareLink,
-      });
+        <div className="p-6">
+          Cargando...
+        </div>
 
-      return;
-    }
+      </AppLayout>
+    );
 
-    await navigator.clipboard.writeText(shareLink);
-    alert("Link copiado!");
   }
 
   return (
-    <main className="min-h-screen max-w-md mx-auto p-6 flex flex-col gap-6">
-      <h1 className="text-4xl font-bold text-center">
-        A Salvo!
-      </h1>
 
-      <div className="flex flex-col gap-2">
-        <label>Grupo</label>
+    <AppLayout>
 
-        <input
-          value={groupName}
-          onChange={(e) => setGroupName(e.target.value)}
-          className="border rounded-lg p-3"
-        />
-      </div>
+      <Header
+        title={`Hola ${
+          home.profile.full_name?.split(" ")[0] ??
+          "!"
+        } 👋`}
+        subtitle="¿A dónde vamos hoy?"
+        avatarUrl={home.profile.avatar_url}
+      />
 
-      <div className="flex flex-col gap-2">
-        <label>Nickname</label>
+      <main className="flex-1 px-6 pb-24">
 
-        <input
-          value={nickname}
-          onChange={(e) => setNickname(e.target.value)}
-          className="border rounded-lg p-3"
-        />
-      </div>
+        <Section
+          title="Tus grupos"
+          subtitle="Elegí un grupo para ver su estado."
+        >
 
-      <div className="flex flex-col gap-2">
-        <label>Rango de llegada</label>
+          <div className="space-y-4">
 
-        <div className="flex gap-2">
-          <input
-            type="time"
-            value={fromTime}
-            onChange={(e) => setFromTime(e.target.value)}
-            className="border rounded-lg p-3 flex-1"
-          />
+            {home.groups.map((group) => (
 
-          <input
-            type="time"
-            value={toTime}
-            onChange={(e) => setToTime(e.target.value)}
-            className="border rounded-lg p-3 flex-1"
-          />
-        </div>
-      </div>
+              <GroupCard
+                key={group.id}
+                {...group}
+              />
 
-      <button
-        onClick={handleCreateGroup}
-        className="border rounded-lg p-4"
-      >
-        Crear grupo
-      </button>
+            ))}
 
-      {shareLink && (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm break-all">
-            {shareLink}
-          </p>
+          </div>
 
-          <button
-            onClick={handleShare}
-            className="border rounded-lg p-4"
+        </Section>
+
+        <div className="mt-8">
+
+          <Button
+            fullWidth
+            onClick={() =>
+              router.push("/asalvo/create")
+            }
           >
-            Compartir
-          </button>
+            + Nuevo grupo
+          </Button>
+
         </div>
-      )}
-    </main>
+
+      </main>
+
+      <BottomNavigation />
+
+    </AppLayout>
+
   );
+
 }

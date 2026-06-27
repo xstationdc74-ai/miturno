@@ -65,11 +65,7 @@ await supabaseASalvo
       .delete()
       .eq("id", participant.group_id);
 
-  console.log("DELETE GROUP", {
-    groupId: participant.group_id,
-    deleteError,
-  });
-}
+  }
 
     return NextResponse.json({
       success: true,

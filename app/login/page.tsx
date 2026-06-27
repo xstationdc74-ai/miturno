@@ -1,67 +1,93 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase/client"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase/client";
 
 export default function LoginPage() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [email, setEmail] = useState("");
+  const [password, setPassword] =
+    useState("");
+  const [loading, setLoading] =
+    useState(false);
+  const [error, setError] = useState<
+    string | null
+  >(null);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setError(null)
+  const handleLogin = async (
+    e: React.FormEvent
+  ) => {
+    e.preventDefault();
 
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    setLoading(true);
+    setError(null);
+
+    const { data, error } =
+      await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
     if (error) {
-      setError(error.message)
-      setLoading(false)
-      return
+      setError(error.message);
+      setLoading(false);
+      return;
     }
 
-    const user = data.user
-    if (!user) return
+    const user = data.user;
 
-    // 🔥 buscar relación user-business
-    const { data: relation, error: relError } = await supabase
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
+    const {
+      data: relation,
+      error: relError,
+    } = await supabase
       .from("business_users")
       .select("role, business_id")
       .eq("user_id", user.id)
-      .single()
+      .single();
 
     if (relError || !relation) {
-      setError("No tenés acceso a ningún negocio")
-      setLoading(false)
-      return
+      setError(
+        "No tenés acceso a ningún negocio"
+      );
+      setLoading(false);
+      return;
     }
 
-    // 🔥 obtener slug del business
-    const { data: business } = await supabase
-      .from("business")
-      .select("slug")
-      .eq("id", relation.business_id)
-      .single()
+    const { data: business } =
+      await supabase
+        .from("business")
+        .select("slug")
+        .eq("id", relation.business_id)
+        .single();
 
-    const slug = business?.slug
+    const slug = business?.slug;
 
-    // 🔥 redirect según rol
     if (relation.role === "admin") {
-      router.push(`/admin/${slug}`)
+      router.push(`/admin/${slug}`);
     } else {
-      router.push(`/${slug}`)
+      router.push(`/${slug}`);
     }
 
-    router.refresh()
-  }
+    router.refresh();
+  };
+
+  const handleGoogleLogin =
+    async () => {
+      await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo:
+`${window.location.origin}/asalvo/auth/callback`,
+        },
+      });
+    };
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -69,13 +95,17 @@ export default function LoginPage() {
         onSubmit={handleLogin}
         className="flex flex-col gap-4 w-full max-w-sm"
       >
-        <h1 className="text-2xl font-bold">Login</h1>
+        <h1 className="text-2xl font-bold">
+          Login
+        </h1>
 
         <input
           type="email"
           placeholder="Email"
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) =>
+            setEmail(e.target.value)
+          }
           className="border p-2"
           required
         />
@@ -84,21 +114,37 @@ export default function LoginPage() {
           type="password"
           placeholder="Password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) =>
+            setPassword(e.target.value)
+          }
           className="border p-2"
           required
         />
 
-        {error && <p className="text-red-500">{error}</p>}
+        {error && (
+          <p className="text-red-500">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
           disabled={loading}
           className="bg-black text-white p-2"
         >
-          {loading ? "Entrando..." : "Entrar"}
+          {loading
+            ? "Entrando..."
+            : "Entrar"}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleGoogleLogin}
+          className="border p-2 rounded"
+        >
+          Continuar con Google
         </button>
       </form>
     </div>
-  )
+  );
 }

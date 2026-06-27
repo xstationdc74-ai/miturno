@@ -5,23 +5,42 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
-   const {
-  groupName,
-  nickname,
-  fromTime,
-  toTime,
-} = body;
+    const {
+      groupName,
+      nickname,
+      fromTime,
+      toTime,
+    } = body;
 
-    const supabase = await createSupabaseServerClient();
+    const supabase =
+      await createSupabaseServerClient();
 
-    const { data: group, error: groupError } = await supabase
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          error: "Usuario no autenticado",
+        },
+        { status: 401 }
+      );
+    }
+
+    const {
+      data: group,
+      error: groupError,
+    } = await supabase
       .from("groups")
-.insert({
-  name: groupName,
-  status: "active",
-  arrival_from: fromTime,
-  arrival_to: toTime,
-})
+      .insert({
+        name: groupName,
+        status: "active",
+        arrival_from: fromTime,
+        arrival_to: toTime,
+        owner_id: user.id,
+      })
       .select()
       .single();
 
@@ -32,18 +51,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const { data: participant, error: participantError,} = await supabase
-
-  .from("participants")
-.insert({
-  group_id: group.id,
-  nickname,
-  status: "pending",
-  arrival_from: fromTime,
-  arrival_to: toTime,
-})
-  .select()
-  .single();
+    const {
+      data: participant,
+      error: participantError,
+    } = await supabase
+      .from("participants")
+      .insert({
+        group_id: group.id,
+        user_id: user.id,
+        nickname,
+        status: "pending",
+        arrival_from: fromTime,
+        arrival_to: toTime,
+      })
+      .select()
+      .single();
 
     if (participantError) {
       return NextResponse.json(
@@ -52,18 +74,81 @@ export async function POST(request: Request) {
       );
     }
 
-return NextResponse.json({
-  success: true,
-  inviteToken: group.invite_token,
-  groupId: group.id,
-  participantToken:
-    participant.participant_token,
-});
+    return NextResponse.json({
+      success: true,
+      inviteToken: group.invite_token,
+      groupId: group.id,
+      participantToken:
+        participant.participant_token,
+    });
 
-
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: "Unexpected error" },
+      {
+        error: "Unexpected error",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const supabase =
+      await createSupabaseServerClient();
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          error: "Usuario no autenticado",
+        },
+        { status: 401 }
+      );
+    }
+
+    const { data, error } =
+      await supabase
+        .from("participants")
+        .select(`
+          nickname,
+          groups (
+            id,
+            name,
+            status,
+            owner_id,
+            created_at
+          )
+        `)
+        .eq("user_id", user.id);
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    const groups = data.map(
+      (item: any) => ({
+        nickname: item.nickname,
+        ...(Array.isArray(item.groups)
+          ? item.groups[0]
+          : item.groups),
+      })
+    );
+
+    return NextResponse.json(groups);
+
+  } catch {
+    return NextResponse.json(
+      {
+        error: "Unexpected error",
+      },
       { status: 500 }
     );
   }
