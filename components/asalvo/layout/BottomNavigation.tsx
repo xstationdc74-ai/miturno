@@ -11,7 +11,7 @@ import {
 
 const items = [
   {
-    href: "/asalvo/groups",
+    href: "/asalvo",
     label: "Inicio",
     icon: House,
   },

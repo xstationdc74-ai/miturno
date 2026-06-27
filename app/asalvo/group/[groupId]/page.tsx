@@ -1,10 +1,16 @@
 import { notFound } from "next/navigation";
+
 import { supabaseASalvo } from "@/lib/supabase/asalvo";
-import GroupActions from "./GroupActions";
-import GroupRealtime from "./GroupRealtime";
+
+import AppLayout from "@/components/asalvo/layout/AppLayout";
+import Header from "@/components/asalvo/layout/Header";
+import BottomNavigation from "@/components/asalvo/layout/BottomNavigation";
+
 import ShareInvite from "./ShareInvite";
+import GroupRealtime from "./GroupRealtime";
 import ReminderButton from "./ReminderButton";
 import GroupMessages from "./GroupMessages";
+import GroupActions from "./GroupActions";
 
 type Props = {
   params: Promise<{
@@ -27,30 +33,38 @@ export default async function GroupPage({
     notFound();
   }
 
-  
   return (
-    <main className="min-h-screen max-w-md mx-auto p-6 flex flex-col gap-6">
-      <h1 className="text-4xl font-bold text-center">
-        A Salvo!
-      </h1>
+    <AppLayout>
 
-      <h2 className="text-2xl font-semibold text-center">
-        {group.name}
-      </h2>
+      <Header
+        title={group.name}
+        subtitle="Grupo activo"
+      />
 
-     
-      <ShareInvite inviteToken={group.invite_token} />
+      <main className="flex-1 px-5 pb-28 space-y-5">
 
-      <GroupRealtime groupId={groupId} />
+        <ShareInvite
+          inviteToken={group.invite_token}
+        />
 
-      <GroupMessages groupId={groupId} />
+        <GroupRealtime
+          groupId={groupId}
+        />
 
-      <GroupActions />
+        <GroupMessages
+          groupId={groupId}
+        />
 
-      <ReminderButton
-  groupId={groupId}
-/>
-      
-    </main>
+        <GroupActions />
+
+        <ReminderButton
+          groupId={groupId}
+        />
+
+      </main>
+
+      <BottomNavigation />
+
+    </AppLayout>
   );
 }
