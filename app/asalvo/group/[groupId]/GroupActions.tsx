@@ -1,6 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import Button from "@/components/asalvo/ui/Button";
+import Card from "@/components/asalvo/ui/Card";
+
 import ConfirmButton from "./ConfirmButton";
 
 import { getToken } from "firebase/messaging";
@@ -24,9 +28,7 @@ export default function GroupActions() {
       typeof window !== "undefined" &&
       "Notification" in window
     ) {
-      setPermission(
-        Notification.permission
-      );
+      setPermission(Notification.permission);
     }
   }, []);
 
@@ -52,15 +54,12 @@ export default function GroupActions() {
         await navigator.serviceWorker.getRegistrations();
 
       const firebaseToken =
-        await getToken(
-          messaging,
-          {
-            vapidKey:
-              "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
-            serviceWorkerRegistration:
-              registrations[0],
-          }
-        );
+        await getToken(messaging, {
+          vapidKey:
+            "BK1rY6Uuz4wnzAFj1NFMTNlEEfSl75FsUjy9Yrg4H2JpiCfRwudszM8pqkcK8oD3WU5IK9KsP79mWLdlIhE4FUs",
+          serviceWorkerRegistration:
+            registrations[0],
+        });
 
       if (
         !firebaseToken ||
@@ -79,8 +78,7 @@ export default function GroupActions() {
           },
           body: JSON.stringify({
             participantToken,
-            deviceToken:
-              firebaseToken,
+            deviceToken: firebaseToken,
             platform: "web",
           }),
         }
@@ -95,21 +93,23 @@ export default function GroupActions() {
   }
 
   return (
-    <div className="mt-6 flex flex-col gap-4">
+    <Card className="space-y-4">
+
       <ConfirmButton
         participantToken={participantToken}
       />
 
-      <button
+      <Button
+        fullWidth
         onClick={enableNotifications}
-        className="bg-blue-600 text-white px-4 py-2 rounded"
       >
         🔔 Activar notificaciones
-      </button>
+      </Button>
 
-      <p className="text-sm text-center">
+      <p className="text-center text-sm text-slate-500">
         Estado: {permission}
       </p>
-    </div>
+
+    </Card>
   );
 }

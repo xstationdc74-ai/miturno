@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
+import Card from "@/components/asalvo/ui/Card";
+
 import { supabaseASalvo } from "@/lib/supabase/asalvo";
 
 type Message = {
@@ -22,9 +25,6 @@ export default function GroupMessages({
 
   useEffect(() => {
     async function loadMessages() {
-
-
-
       const { data } = await supabaseASalvo
         .from("group_messages")
         .select("*")
@@ -33,7 +33,6 @@ export default function GroupMessages({
           ascending: false,
         });
 
-      
       setMessages(data ?? []);
     }
 
@@ -63,19 +62,31 @@ export default function GroupMessages({
   }, [groupId]);
 
   return (
-    <div className="border rounded-lg p-4 flex flex-col gap-2">
-      <h3 className="font-semibold">
-        Actividad del grupo
+    <Card>
+
+      <h3 className="mb-4 text-lg font-bold">
+        Actividad
       </h3>
 
-      {messages.map((message) => (
-        <div
-          key={message.id}
-          className="text-sm"
-        >
-          {message.message}
-        </div>
-      ))}
-    </div>
+      <div className="space-y-3">
+
+        {messages.length === 0 && (
+          <p className="text-sm text-slate-500">
+            Todavía no hay actividad.
+          </p>
+        )}
+
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700"
+          >
+            {message.message}
+          </div>
+        ))}
+
+      </div>
+
+    </Card>
   );
 }
