@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import clsx from "clsx"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import clsx from "clsx";
 import {
   House,
   Bell,
   User,
-} from "lucide-react"
+} from "lucide-react";
 
 const items = [
   {
@@ -25,37 +25,57 @@ const items = [
     label: "Perfil",
     icon: User,
   },
-]
+];
 
 export default function BottomNavigation() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
-    <nav className="sticky bottom-0 border-t border-gray-200 bg-white">
-      <div className="mx-auto flex h-16 max-w-md items-center justify-around">
-        {items.map((item) => {
-          const Icon = item.icon
+    <nav
+      className="
+        fixed
+        bottom-0
+        left-0
+        right-0
+        z-40
+        border-t
+        border-slate-200
+        bg-white/95
+        backdrop-blur-md
+      "
+    >
+      <div className="mx-auto flex h-20 max-w-md items-center justify-around px-4 pb-safe">
 
-          const active =
-            pathname === item.href
+        {items.map((item) => {
+          const Icon = item.icon;
+
+          const active = pathname === item.href;
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={clsx(
-                "flex flex-col items-center gap-1 text-xs transition-colors",
+                "flex flex-col items-center justify-center gap-1 transition-all duration-200",
                 active
-                  ? "text-green-600"
-                  : "text-gray-400 hover:text-gray-600"
+                  ? "text-emerald-600"
+                  : "text-slate-400 hover:text-slate-600"
               )}
             >
-              <Icon size={22} />
-              <span>{item.label}</span>
+              <Icon
+                size={22}
+                strokeWidth={2}
+              />
+
+              <span className="text-[11px] font-medium">
+                {item.label}
+              </span>
+
             </Link>
-          )
+          );
         })}
+
       </div>
     </nav>
-  )
+  );
 }

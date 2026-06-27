@@ -8,14 +8,16 @@ import Header from "@/components/asalvo/layout/Header";
 import BottomNavigation from "@/components/asalvo/layout/BottomNavigation";
 
 import Section from "@/components/asalvo/ui/Section";
-import Button from "@/components/asalvo/ui/Button";
+import FloatingButton from "@/components/asalvo/ui/FloatingButton";
 
 import GroupCard from "@/components/asalvo/features/GroupCard";
+import HeroArrival from "@/components/asalvo/features/HeroArrival";
+import EmptyState from "@/components/asalvo/features/EmptyState";
 
 type Profile = {
   id: string;
   full_name: string | null;
-  email: string |null;
+  email: string | null;
   avatar_url: string | null;
 };
 
@@ -32,7 +34,6 @@ type HomeData = {
 };
 
 export default function AsalvoPage() {
-
   const router = useRouter();
 
   const [home, setHome] =
@@ -42,9 +43,7 @@ export default function AsalvoPage() {
     useState(true);
 
   useEffect(() => {
-
     async function loadHome() {
-
       const response =
         await fetch("/api/asalvo/home");
 
@@ -57,83 +56,101 @@ export default function AsalvoPage() {
         await response.json();
 
       setHome(data);
-
       setLoading(false);
-
     }
 
     loadHome();
-
   }, [router]);
 
   if (loading || !home) {
-
     return (
       <AppLayout>
-
         <div className="p-6">
           Cargando...
         </div>
-
       </AppLayout>
     );
-
   }
 
   return (
-
     <AppLayout>
 
       <Header
-        title={`Hola ${
-          home.profile.full_name?.split(" ")[0] ??
-          "!"
-        } 👋`}
-        subtitle="¿A dónde vamos hoy?"
+        title={`¡Hola, ${
+          home.profile.full_name?.split(" ")[0] ?? ""
+        }! 👋`}
+        subtitle={
+          home.groups.length > 0
+            ? "Tenés una llegada en curso."
+            : "Todo tranquilo."
+        }
         avatarUrl={home.profile.avatar_url}
       />
 
-      <main className="flex-1 px-6 pb-24">
+      <main className="flex-1 px-5 pb-28">
+
+        <HeroArrival
+          status={
+            home.groups.length > 0
+              ? "active"
+              : "idle"
+          }
+          title={
+            home.groups.length > 0
+              ? home.groups[0].name
+              : "Todo tranquilo"
+          }
+          subtitle={
+            home.groups.length > 0
+              ? home.groups[0].nickname
+              : "No hay llegadas pendientes."
+          }
+        />
 
         <Section
-          title="Tus grupos"
-          subtitle="Elegí un grupo para ver su estado."
+          title="Mis grupos"
         >
 
-          <div className="space-y-4">
+          {home.groups.length === 0 ? (
 
-            {home.groups.map((group) => (
+            <EmptyState
+              title="Todavía no tenés grupos"
+              description="Creá un grupo o unite mediante una invitación."
+              actionLabel="Crear grupo"
+              onAction={() =>
+                router.push("/asalvo/create")
+              }
+            />
 
-              <GroupCard
-                key={group.id}
-                {...group}
-              />
+          ) : (
 
-            ))}
+            <div className="space-y-3">
 
-          </div>
+              {home.groups.map((group) => (
+
+                <GroupCard
+                  key={group.id}
+                  {...group}
+                />
+
+              ))}
+
+            </div>
+
+          )}
 
         </Section>
 
-        <div className="mt-8">
-
-          <Button
-            fullWidth
-            onClick={() =>
-              router.push("/asalvo/create")
-            }
-          >
-            + Nuevo grupo
-          </Button>
-
-        </div>
-
       </main>
+
+      <FloatingButton
+        onClick={() =>
+          router.push("/asalvo/create")
+        }
+      />
 
       <BottomNavigation />
 
     </AppLayout>
-
   );
-
 }
