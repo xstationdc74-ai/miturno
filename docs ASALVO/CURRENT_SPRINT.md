@@ -10,21 +10,37 @@ Llegar a una APK funcional para la primera prueba con Leo.
 
 ### ✅ Funciona
 
-- Login
-- Home nueva
-- HeroArrival
-- Header
-- BottomNavigation
-- FloatingButton
-- Crear Grupo
-- API /groups
-- Crear grupo desde UI
-- Share Invite
-- Grupo integrado al nuevo AppLayout
-- Navegación Home ↔ Grupo
-- Deploy en Vercel OK
+## Estado
+
+✅ Login Google nuevo
+
+✅ Callback OAuth
+
+✅ Home nueva
+
+✅ Crear grupo
+
+✅ Join
+
+✅ Confirmación de llegada
+
+✅ Realtime
+
+✅ Deploy
 
 ---
+
+## Pendiente
+
+- Push Notifications
+
+- Arrival Monitor automático
+
+- Migración visual de GroupRealtime
+
+- APK
+
+- Test con Leo
 
 ## Pendiente inmediato
 

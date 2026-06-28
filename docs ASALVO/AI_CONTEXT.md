@@ -90,41 +90,25 @@ Envolver los componentes viejos con el nuevo Design System.
 
 # Estado actual
 
-✅ Login
+✅ Login Google
 
-✅ Home nueva
+✅ Callback OAuth
 
-✅ Hero nuevo
-
-✅ GroupCard nuevo
-
-✅ Header nuevo
-
-✅ BottomNavigation nueva
-
-✅ FloatingButton
+✅ Home
 
 ✅ Crear Grupo
 
-✅ API de grupos
+✅ Join
 
-✅ Compartir invitación
+✅ ConfirmButton
 
-✅ Grupo integrado al nuevo layout
-
-⏳ GroupRealtime (pendiente de migrar)
-
-⏳ Join
-
-⏳ Activity
-
-⏳ Perfil
+✅ Realtime
 
 ⏳ Push Notifications
 
-⏳ APK
+⏳ Arrival Monitor
 
----
+⏳ APK
 
 # Flujo principal
 
@@ -176,6 +160,20 @@ No hacer cambios parciales ("bisturí").
 No asumir.
 
 Preguntar si falta contexto.
+
+## Regla de depuración
+
+Si una funcionalidad ya funcionaba anteriormente:
+
+NO rediseñarla.
+
+NO proponer una arquitectura nueva.
+
+Reconstruir el flujo existente.
+
+Encontrar exactamente qué cambio rompió el comportamiento.
+
+Solo después de recuperar la funcionalidad evaluar mejoras de arquitectura.
 
 ---
 
@@ -271,3 +269,107 @@ Priorizar cerrar funcionalidades antes que perfeccionar la UX.
 Objetivo actual:
 
 APK funcional.
+
+# Autenticación
+
+A Salvo utiliza autenticación Google mediante Supabase Auth.
+
+Flujo:
+
+/asalvo/login
+↓
+
+Google OAuth
+
+↓
+
+/asalvo/auth/callback
+
+↓
+
+profiles_asalvo
+
+↓
+
+/asalvo
+
+El callback acepta el parámetro ?next= y redirecciona al destino original.
+
+La identidad permanente del usuario es profiles_asalvo.
+
+participants representa únicamente la participación del usuario dentro de un grupo.
+
+# Bug importante resuelto (2026-06-28)
+
+Se detectó un bug donde el creador del grupo conservaba un
+participant_token viejo en localStorage.
+
+Consecuencia:
+
+- ConfirmButton devolvía 500.
+- No cambiaba el estado.
+- El Arrival Monitor no podía continuar correctamente.
+
+Solución:
+
+CreateGroupPage ahora guarda:
+
+localStorage.setItem(
+"asalvo_participant_token",
+data.participantToken
+);
+
+Antes de navegar al grupo.
+
+# Reglas para continuar el proyecto
+
+## Árbol del proyecto
+
+Antes de indicar un archivo:
+
+- No asumir la ubicación por convención.
+- Pedir el árbol si hay dudas.
+- Priorizar la estructura real del proyecto sobre nombres habituales de Next.js.
+
+## Recuperación de funcionalidades
+
+Cuando una funcionalidad funcionó anteriormente:
+
+- No proponer una implementación nueva.
+- Reconstruir el flujo existente.
+- Seguir las llamadas reales entre componentes, lib y api.
+- Encontrar el punto exacto donde se cortó el flujo.
+
+## Método
+
+Una miga de pan por vez.
+
+Cada paso debe responder una única pregunta.
+
+No pedir búsquedas masivas (`grep -R .`) si ya existe información más específica.
+
+Siempre partir del archivo que el usuario está mostrando.
+
+# Estado de Push Notifications
+
+Arquitectura existente (NO rediseñar):
+
+GroupActions
+↓
+lib/asalvo/messaging.ts
+↓
+firebase-messaging-sw.js
+↓
+/api/asalvo/register-device
+↓
+push_devices
+↓
+/api/asalvo/send-test-push
+↓
+Firebase Admin
+↓
+Android
+
+Objetivo:
+Encontrar el punto donde este flujo dejó de ejecutarse.
+No reemplazarlo por otro.

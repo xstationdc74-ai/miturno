@@ -4,6 +4,9 @@ import { createSupabaseServerClient } from "@/lib/supabase/server";
 export async function POST(
   request: Request
 ) {
+
+  console.log("REGISTER DEVICE HIT");
+
   try {
     const {
       participantToken,
@@ -43,17 +46,32 @@ export async function POST(
       );
     }
 
-    const {
-      data: participant,
-      error: participantError,
-    } = await supabase
-      .from("participants")
-      .select("id")
-      .eq(
-        "participant_token",
-        participantToken
-      )
-      .single();
+   console.log(
+  "participantToken:",
+  participantToken
+);
+
+const {
+  data: participant,
+  error: participantError,
+} = await supabase
+  .from("participants")
+  .select("id")
+  .eq(
+    "participant_token",
+    participantToken
+  )
+  .single();
+
+console.log(
+  "participant:",
+  participant
+);
+
+console.log(
+  "participantError:",
+  participantError
+);
 
     if (
       participantError ||

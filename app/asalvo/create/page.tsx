@@ -48,12 +48,24 @@ export default function CreateGroupPage() {
 
       const data = await response.json();
 
-      if (!response.ok) {
-        alert(data.error ?? "No se pudo crear el grupo.");
-        return;
-      }
+      console.log("CREATE RESPONSE:", data);
 
-      router.push(`/asalvo/group/${data.groupId}`);
+     if (!response.ok) {
+  alert(data.error ?? "No se pudo crear el grupo.");
+  return;
+}
+
+localStorage.setItem(
+  "asalvo_participant_token",
+  data.participantToken
+);
+
+console.log(
+  "TOKEN GUARDADO:",
+  localStorage.getItem("asalvo_participant_token")
+);
+
+router.push(`/asalvo/group/${data.groupId}`);
 
     } finally {
       setLoading(false);

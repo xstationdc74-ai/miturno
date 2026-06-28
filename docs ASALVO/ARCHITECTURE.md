@@ -48,3 +48,30 @@ Envolver la lógica existente con:
 - BottomNavigation
 
 Migrar componente por componente.
+
+## Autenticación
+
+profiles_asalvo
+↓
+
+Identidad permanente
+
+↓
+
+participants
+
+Participación por grupo
+
+↓
+
+groups
+
+owner_id → profiles_asalvo
+
+user_id → profiles_asalvo
+
+participant_token
+
+Identificador temporal del participante dentro de un grupo.
+
+Nunca reemplaza la identidad permanente.

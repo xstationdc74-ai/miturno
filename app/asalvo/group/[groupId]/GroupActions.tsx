@@ -37,6 +37,11 @@ export default function GroupActions() {
       const result =
         await Notification.requestPermission();
 
+      console.log(
+        "Notification permission:",
+        result
+      );
+
       setPermission(result);
 
       if (result !== "granted") {
@@ -46,12 +51,22 @@ export default function GroupActions() {
       const messaging =
         await getMessagingInstance();
 
+      console.log(
+        "Messaging instance:",
+        messaging
+      );
+
       if (!messaging) {
         return;
       }
 
       const registrations =
         await navigator.serviceWorker.getRegistrations();
+
+      console.log(
+        "SW registrations:",
+        registrations
+      );
 
       const firebaseToken =
         await getToken(messaging, {
@@ -61,30 +76,57 @@ export default function GroupActions() {
             registrations[0],
         });
 
+      console.log(
+        "Firebase token:",
+        firebaseToken
+      );
+
       if (
         !firebaseToken ||
         !participantToken
       ) {
+        console.log(
+          "Abort:",
+          {
+            firebaseToken,
+            participantToken,
+          }
+        );
         return;
       }
 
-      await fetch(
-        "/api/asalvo/register-device",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-          },
-          body: JSON.stringify({
-            participantToken,
-            deviceToken: firebaseToken,
-            platform: "web",
-          }),
-        }
+      const response =
+        await fetch(
+          "/api/asalvo/register-device",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type":
+                "application/json",
+            },
+            body: JSON.stringify({
+              participantToken,
+              deviceToken: firebaseToken,
+              platform: "web",
+            }),
+          }
+        );
+
+      console.log(
+        "register-device status:",
+        response.status
       );
+
+      console.log(
+        "register-device body:",
+        await response.json()
+      );
+
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Enable notifications error:",
+        error
+      );
     }
   }
 
