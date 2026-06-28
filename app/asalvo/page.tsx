@@ -48,7 +48,12 @@ export default function AsalvoPage() {
         await fetch("/api/asalvo/home");
 
       if (!response.ok) {
-        router.push("/login");
+        console.log(
+          "HOME STATUS:",
+          response.status
+        );
+
+        router.push("/asalvo/login");
         return;
       }
 
