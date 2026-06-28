@@ -70,6 +70,6 @@ export async function GET(request: Request) {
     }
   }
 return NextResponse.redirect(
-  new URL("/asalvo/lab", request.url)
+  new URL("/asalvo", request.url)
 );
 }

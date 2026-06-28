@@ -1,4 +1,4 @@
-import LoginClient from "./LoginClient";
+import LoginClient from "./LoginClient.tsx";
 
 type Props = {
   searchParams: Promise<{
