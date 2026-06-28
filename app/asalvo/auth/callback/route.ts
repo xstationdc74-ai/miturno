@@ -5,7 +5,12 @@ import { cookies } from "next/headers";
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
 
-  const code = requestUrl.searchParams.get("code");
+  const code =
+    requestUrl.searchParams.get("code");
+
+  const next =
+    requestUrl.searchParams.get("next") ??
+    "/asalvo";
 
   const cookieStore = await cookies();
 
@@ -17,10 +22,15 @@ export async function GET(request: Request) {
         getAll() {
           return cookieStore.getAll();
         },
+
         setAll(cookiesToSet) {
           cookiesToSet.forEach(
             ({ name, value, options }) =>
-              cookieStore.set(name, value, options)
+              cookieStore.set(
+                name,
+                value,
+                options
+              )
           );
         },
       },
@@ -28,7 +38,9 @@ export async function GET(request: Request) {
   );
 
   if (code) {
-    await supabase.auth.exchangeCodeForSession(code);
+    await supabase.auth.exchangeCodeForSession(
+      code
+    );
   }
 
   const {
@@ -36,11 +48,12 @@ export async function GET(request: Request) {
   } = await supabase.auth.getUser();
 
   if (user) {
-    const { data: profile } = await supabase
-      .from("profiles_asalvo")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
+    const { data: profile } =
+      await supabase
+        .from("profiles_asalvo")
+        .select("id")
+        .eq("id", user.id)
+        .maybeSingle();
 
     if (!profile) {
       await supabase
@@ -58,6 +71,6 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.redirect(
-    new URL("/asalvo", request.url)
+    new URL(next, request.url)
   );
 }

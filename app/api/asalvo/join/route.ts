@@ -6,15 +6,33 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     const {
-  inviteToken,
-  nickname,
-  fromTime,
-  toTime,
-} = body;
+      inviteToken,
+      nickname,
+      fromTime,
+      toTime,
+    } = body;
 
-    const supabase = await createSupabaseServerClient();
+    const supabase =
+      await createSupabaseServerClient();
 
-    const { data: group, error: groupError } = await supabase
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        {
+          error: "Usuario no autenticado",
+        },
+        { status: 401 }
+      );
+    }
+
+    const {
+      data: group,
+      error: groupError,
+    } = await supabase
       .from("groups")
       .select("*")
       .eq("invite_token", inviteToken)
@@ -22,33 +40,43 @@ export async function POST(request: Request) {
 
     if (groupError || !group) {
       return NextResponse.json(
-        { error: "Grupo no encontrado" },
+        {
+          error: "Grupo no encontrado",
+        },
         { status: 404 }
       );
     }
 
-    const { data: participant, error: participantError } =
-      await supabase
-        .from("participants")
-        .insert({
-  group_id: group.id,
-  nickname,
-  status: "pending",
-  automation_stage: "waiting",
-  arrival_date: new Date().toISOString().split("T")[0],
-  timezone:
-    Intl.DateTimeFormat()
-      .resolvedOptions()
-      .timeZone,
-  arrival_from: fromTime,
-  arrival_to: toTime,
-})
-        .select()
-        .single();
+    const {
+      data: participant,
+      error: participantError,
+    } = await supabase
+      .from("participants")
+      .insert({
+        group_id: group.id,
+        user_id: user.id,
+        nickname,
+        status: "pending",
+        automation_stage: "waiting",
+        arrival_date:
+          new Date()
+            .toISOString()
+            .split("T")[0],
+        timezone:
+          Intl.DateTimeFormat()
+            .resolvedOptions()
+            .timeZone,
+        arrival_from: fromTime,
+        arrival_to: toTime,
+      })
+      .select()
+      .single();
 
     if (participantError) {
       return NextResponse.json(
-        { error: participantError.message },
+        {
+          error: participantError.message,
+        },
         { status: 500 }
       );
     }
@@ -58,9 +86,12 @@ export async function POST(request: Request) {
       participant,
       group,
     });
-  } catch (error) {
+
+  } catch {
     return NextResponse.json(
-      { error: "Unexpected error" },
+      {
+        error: "Unexpected error",
+      },
       { status: 500 }
     );
   }

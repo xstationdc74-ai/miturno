@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { supabase } from "@/lib/supabase/client";
+
 type Props = {
   inviteToken: string;
 };
@@ -10,106 +12,117 @@ type Props = {
 export default function JoinForm({
   inviteToken,
 }: Props) {
-  const [nickname, setNickname] = useState("");
-
-const [fromTime, setFromTime] =
-  useState("22:00");
-
-const [toTime, setToTime] =
-  useState("22:20");
-  const [joined, setJoined] = useState(false);
-
   const router = useRouter();
 
+  const [nickname, setNickname] =
+    useState("");
+
+  const [fromTime, setFromTime] =
+    useState("22:00");
+
+  const [toTime, setToTime] =
+    useState("22:20");
+
+  const [loading, setLoading] =
+    useState(false);
+
   async function handleJoin() {
-    console.log("CLICK JOIN");
+    setLoading(true);
 
-    const response = await fetch("/api/asalvo/join", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-  inviteToken,
-  nickname,
-  fromTime,
-  toTime,
-}),
-    });
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!response.ok) {
-      alert("No se pudo unir al grupo");
+    if (!user) {
+      router.push(
+        `/asalvo/login?next=${encodeURIComponent(
+          `/asalvo/join/${inviteToken}`
+        )}`
+      );
+
       return;
     }
 
-   const result = await response.json();
-   
-        localStorage.setItem(
-        "asalvo_participant_token",
-        result.participant.participant_token
-          );
-   router.push(`/asalvo/group/${result.group.id}`); 
+    const response = await fetch(
+      "/api/asalvo/join",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+        body: JSON.stringify({
+          inviteToken,
+          nickname,
+          fromTime,
+          toTime,
+        }),
+      }
+    );
 
-  }
+    if (!response.ok) {
+      alert("No se pudo unir al grupo");
+      setLoading(false);
+      return;
+    }
 
-  if (joined) {
-    return (
-      <div className="flex flex-col gap-4 text-center">
-        <h2 className="text-2xl font-semibold">
-          Listo!
-        </h2>
+    const result =
+      await response.json();
 
-        <p>
-          Ya formas parte del grupo.
-        </p>
+    localStorage.setItem(
+      "asalvo_participant_token",
+      result.participant.participant_token
+    );
 
-        <p>
-          Ahora sólo queda disfrutar la experiencia.
-          Yo me ocuparé de los horarios y los avisos.
-        </p>
-
-        <p>
-          Nos vemos para la próxima experiencia.
-        </p>
-      </div>
+    router.push(
+      `/asalvo/group/${result.group.id}`
     );
   }
 
   return (
     <div className="flex flex-col gap-4">
+
       <input
         value={nickname}
-        onChange={(e) => setNickname(e.target.value)}
-        placeholder="Tu nickname"
-        className="border rounded-lg p-3"
+        onChange={(e) =>
+          setNickname(e.target.value)
+        }
+        placeholder="Tu nombre"
+        className="rounded-xl border p-3"
       />
 
-<div className="flex gap-2">
-  <input
-    type="time"
-    value={fromTime}
-    onChange={(e) =>
-      setFromTime(e.target.value)
-    }
-    className="border rounded-lg p-3 flex-1"
-  />
+      <div className="flex gap-2">
 
-  <input
-    type="time"
-    value={toTime}
-    onChange={(e) =>
-      setToTime(e.target.value)
-    }
-    className="border rounded-lg p-3 flex-1"
-  />
-</div>
+        <input
+          type="time"
+          value={fromTime}
+          onChange={(e) =>
+            setFromTime(e.target.value)
+          }
+          className="flex-1 rounded-xl border p-3"
+        />
+
+        <input
+          type="time"
+          value={toTime}
+          onChange={(e) =>
+            setToTime(e.target.value)
+          }
+          className="flex-1 rounded-xl border p-3"
+        />
+
+      </div>
 
       <button
         onClick={handleJoin}
-        className="border rounded-lg p-4"
+        disabled={loading}
+        className="rounded-2xl bg-green-600 p-4 text-white"
       >
-        Unirme
+        {loading
+          ? "Uniéndome..."
+          : "Unirme"}
       </button>
+
     </div>
   );
 }
