@@ -53,20 +53,18 @@ export default function GroupActions() {
 
     alert("🔥 onMessage ejecutado");
 
-    const registration =
-      await navigator.serviceWorker.ready;
-
-    await registration.showNotification(
-      payload.notification?.title ??
-        "A Salvo! 🏎️💚",
-      {
-        body:
-          payload.notification?.body ??
-          "",
-        icon:
-          "/icons/icon-192x192.png",
-      }
-    );
+    new Notification(
+  payload.notification?.title ??
+    "A Salvo! 🏎️💚",
+  {
+    body:
+      payload.notification?.body ??
+      "",
+    icon:
+      "/icons/icon-192x192.png",
+  }
+);
+    
   }
 );
     }
