@@ -47,24 +47,28 @@ export default function GroupActions() {
       }
 
       unsubscribe = onMessage(
-        messaging,
-        async (payload) => {
-          const registration =
-            await navigator.serviceWorker.ready;
+  messaging,
+  async (payload) => {
+    console.log("🔥 onMessage", payload);
 
-          await registration.showNotification(
-            payload.notification?.title ??
-              "A Salvo! 🏎️💚",
-            {
-              body:
-                payload.notification?.body ??
-                "",
-              icon:
-                "/icons/icon-192x192.png",
-            }
-          );
-        }
-      );
+    alert("🔥 onMessage ejecutado");
+
+    const registration =
+      await navigator.serviceWorker.ready;
+
+    await registration.showNotification(
+      payload.notification?.title ??
+        "A Salvo! 🏎️💚",
+      {
+        body:
+          payload.notification?.body ??
+          "",
+        icon:
+          "/icons/icon-192x192.png",
+      }
+    );
+  }
+);
     }
 
     void listenForMessages();
