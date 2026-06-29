@@ -17,10 +17,17 @@ export async function GET(request: Request) {
   authHeaderLength: authHeader?.length,
 });
 
-  if (
-    !cronSecret ||
-    authHeader !== `Bearer ${cronSecret}`
-  ) {
+ console.log({
+  cronSecretLength: cronSecret?.length,
+  authHeaderLength: authHeader?.length,
+  equals:
+    authHeader === `Bearer ${cronSecret}`,
+});
+
+if (
+  !cronSecret ||
+  authHeader !== `Bearer ${cronSecret}`
+) {
     return NextResponse.json(
       {
         success: false,
