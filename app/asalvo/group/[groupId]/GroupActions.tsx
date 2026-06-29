@@ -6,7 +6,11 @@ import Card from "@/components/asalvo/ui/Card";
 
 import ConfirmButton from "./ConfirmButton";
 
-import { getToken } from "firebase/messaging";
+import {
+  getToken,
+  onMessage,
+} from "firebase/messaging";
+
 import { getMessagingInstance } from "@/lib/asalvo/messaging";
 
 export default function GroupActions() {
@@ -28,6 +32,47 @@ export default function GroupActions() {
 
     void enableNotifications();
   }, [participantToken]);
+
+  useEffect(() => {
+    let unsubscribe:
+      | (() => void)
+      | undefined;
+
+    async function listenForMessages() {
+      const messaging =
+        await getMessagingInstance();
+
+      if (!messaging) {
+        return;
+      }
+
+      unsubscribe = onMessage(
+        messaging,
+        async (payload) => {
+          const registration =
+            await navigator.serviceWorker.ready;
+
+          await registration.showNotification(
+            payload.notification?.title ??
+              "A Salvo! 🏎️💚",
+            {
+              body:
+                payload.notification?.body ??
+                "",
+              icon:
+                "/icons/icon-192x192.png",
+            }
+          );
+        }
+      );
+    }
+
+    void listenForMessages();
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
 
   async function enableNotifications(): Promise<boolean> {
     try {
@@ -56,10 +101,6 @@ export default function GroupActions() {
             registrations[0],
         });
 
-await navigator.clipboard.writeText(firebaseToken);
-
-alert("Token copiado al portapapeles");
-
       if (
         !firebaseToken ||
         !participantToken
@@ -78,14 +119,14 @@ alert("Token copiado al portapapeles");
             },
             body: JSON.stringify({
               participantToken,
-              deviceToken: firebaseToken,
+              deviceToken:
+                firebaseToken,
               platform: "web",
             }),
           }
         );
 
       return response.ok;
-
     } catch {
       return false;
     }
@@ -98,7 +139,9 @@ alert("Token copiado al portapapeles");
   return (
     <Card className="space-y-4">
       <ConfirmButton
-        participantToken={participantToken}
+        participantToken={
+          participantToken
+        }
       />
     </Card>
   );
