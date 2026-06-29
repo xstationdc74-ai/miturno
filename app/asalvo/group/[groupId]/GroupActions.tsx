@@ -53,17 +53,17 @@ export default function GroupActions() {
 
     alert("🔥 onMessage ejecutado");
 
-    new Notification(
-  payload.notification?.title ??
-    "A Salvo! 🏎️💚",
+    console.log(Notification.permission);
+
+   const notification = new Notification(
+  payload.notification?.title ?? "A Salvo! 🏎️💚",
   {
-    body:
-      payload.notification?.body ??
-      "",
-    icon:
-      "/icons/icon-192x192.png",
+    body: payload.notification?.body ?? "",
+    icon: "/icons/icon-192x192.png",
   }
 );
+
+console.log(notification);
     
   }
 );
