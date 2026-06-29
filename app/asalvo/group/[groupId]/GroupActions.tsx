@@ -56,6 +56,10 @@ export default function GroupActions() {
             registrations[0],
         });
 
+await navigator.clipboard.writeText(firebaseToken);
+
+alert("Token copiado al portapapeles");
+
       if (
         !firebaseToken ||
         !participantToken
