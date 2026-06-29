@@ -1,8 +1,31 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { buildParticipantDateTime } from "@/lib/asalvo/datetime";
+import { sendPush } from "@/lib/asalvo/sendPush";
 
-export async function GET() {
+export async function GET(request: Request) {
+
+  const authHeader =
+    request.headers.get("authorization");
+
+  const cronSecret =
+    process.env.CRON_SECRET;
+
+  if (
+    !cronSecret ||
+    authHeader !== `Bearer ${cronSecret}`
+  ) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Unauthorized",
+      },
+      {
+        status: 401,
+      }
+    );
+  }
+
   try {
     const supabase = await createSupabaseServerClient();
 
@@ -159,104 +182,139 @@ export async function GET() {
     let firstReminderUpdated = 0;
 
     if (
-      firstReminderIdsToUpdate.length >
-      0
-    ) {
-      const {
-        error: firstReminderError,
-      } = await supabase
-        .from("participants")
-        .update({
-          automation_stage:
-            "first_reminder_sent",
-        })
-        .in(
-          "id",
-          firstReminderIdsToUpdate
-        );
+  firstReminderIdsToUpdate.length > 0
+) {
+  const successfulParticipants: string[] = [];
 
-      if (!firstReminderError) {
-        firstReminderUpdated =
-          firstReminderIdsToUpdate.length;
-      }
+  for (const participant of readyForFirstReminder) {
+    const result =
+      await sendPush({
+        participantId: participant.id,
+        title: "A Salvo! 🏎️💚",
+        body: "¿Llegaste a destino o querés actualizar el horario?",
+      });
+
+     
+
+    if (result.success) {
+      successfulParticipants.push(
+        participant.id
+      );
     }
+  }
 
-    // first_reminder_sent -> second_reminder_sent
-
-    const readyForSecondReminder =
-      firstReminderSent
-        .filter(
-          (p) =>
-            p.arrival_date &&
-            p.arrival_to
-        )
-        .map((p) => {
-          const arrivalLimit =
-            buildParticipantDateTime(
-              p.arrival_date,
-              p.arrival_to,
-              p.timezone
-            );
-
-          const secondReminderTime =
-            new Date(
-              arrivalLimit.getTime() +
-                1 * 60 * 1000
-            );
-
-          return {
-            participant: p,
-            secondReminderTime,
-          };
-        })
-        .filter(
-          ({ secondReminderTime }) =>
-            now >= secondReminderTime
-        )
-        .map(
-          ({
-            participant,
-            secondReminderTime,
-          }) => ({
-            id: participant.id,
-            nickname:
-              participant.nickname,
-            secondReminderTime:
-              secondReminderTime.toISOString(),
-          })
-        );
-
-    const secondReminderIdsToUpdate =
-      readyForSecondReminder.map(
-        (p) => p.id
+  if (successfulParticipants.length > 0) {
+    const {
+      error: firstReminderError,
+    } = await supabase
+      .from("participants")
+      .update({
+        automation_stage:
+          "first_reminder_sent",
+      })
+      .in(
+        "id",
+        successfulParticipants
       );
 
-    let secondReminderUpdated = 0;
+    if (!firstReminderError) {
+      firstReminderUpdated =
+        successfulParticipants.length;
+    }
+  }
+}
 
-    if (
-      secondReminderIdsToUpdate.length >
-      0
-    ) {
-      const {
-        error: secondReminderError,
-      } = await supabase
-        .from("participants")
-        .update({
-          automation_stage:
-            "second_reminder_sent",
-        })
-        .in(
-          "id",
-          secondReminderIdsToUpdate
+// first_reminder_sent -> second_reminder_sent
+
+const readyForSecondReminder =
+  firstReminderSent
+    .filter(
+      (p) =>
+        p.arrival_date &&
+        p.arrival_to
+    )
+    .map((p) => {
+      const arrivalLimit =
+        buildParticipantDateTime(
+          p.arrival_date,
+          p.arrival_to,
+          p.timezone
         );
 
-      if (!secondReminderError) {
-        secondReminderUpdated =
-          secondReminderIdsToUpdate.length;
-      }
-    }
+      const secondReminderTime =
+        new Date(
+          arrivalLimit.getTime() +
+            1 * 60 * 1000
+        );
 
-    const readyForGroupNotification =
+      return {
+        participant: p,
+        secondReminderTime,
+      };
+    })
+    .filter(
+      ({ secondReminderTime }) =>
+        now >= secondReminderTime
+    )
+    .map(
+      ({
+        participant,
+        secondReminderTime,
+      }) => ({
+        id: participant.id,
+        nickname:
+          participant.nickname,
+        secondReminderTime:
+          secondReminderTime.toISOString(),
+      })
+    );
+
+let secondReminderUpdated = 0;
+
+if (
+  readyForSecondReminder.length > 0
+) {
+  const successfulParticipants: string[] = [];
+
+  for (const participant of readyForSecondReminder) {
+    const result =
+      await sendPush({
+        participantId: participant.id,
+        title: "A Salvo! 🏎️💚",
+        body: "Todavía no registramos tu llegada. ¿Querés confirmar tu llegada o actualizar el horario?",
+      });
+
+   
+
+    if (result.success) {
+      successfulParticipants.push(
+        participant.id
+      );
+    }
+  }
+
+  if (successfulParticipants.length > 0) {
+    const {
+      error: secondReminderError,
+    } = await supabase
+      .from("participants")
+      .update({
+        automation_stage:
+          "second_reminder_sent",
+      })
+      .in(
+        "id",
+        successfulParticipants
+      );
+
+    if (!secondReminderError) {
+      secondReminderUpdated =
+        successfulParticipants.length;
+    }
+  }
+}
+
+  const readyForGroupNotification =
   secondReminderSent
     .filter(
       (p) =>
@@ -285,50 +343,62 @@ export async function GET() {
     .filter(
       ({ groupNotificationTime }) =>
         now >= groupNotificationTime
-    )
-    .map(
-      ({
-        participant,
-        groupNotificationTime,
-      }) => ({
-        id: participant.id,
-        nickname:
-          participant.nickname,
-        groupNotificationTime:
-          groupNotificationTime.toISOString(),
-      })
     );
-
-const groupNotificationIdsToUpdate =
-  readyForGroupNotification.map(
-    (p) => p.id
-  );
 
 let groupNotificationUpdated = 0;
 
-if (
-  groupNotificationIdsToUpdate.length >
-  0
-) {
-  const {
-    error: groupNotificationError,
-  } = await supabase
-    .from("participants")
-    .update({
-      automation_stage:
-        "group_notified",
-    })
-    .in(
-      "id",
-      groupNotificationIdsToUpdate
-    );
+for (const item of readyForGroupNotification) {
+  const participant =
+    item.participant;
 
-  if (!groupNotificationError) {
-    groupNotificationUpdated =
-      groupNotificationIdsToUpdate.length;
+  const { data: members } =
+    await supabase
+      .from("participants")
+      .select("id")
+      .eq(
+        "group_id",
+        participant.group_id
+      );
+
+  if (!members?.length) {
+    continue;
+  }
+
+  let successCount = 0;
+
+  for (const member of members) {
+    const result =
+      await sendPush({
+        participantId: member.id,
+        title: "A Salvo! 🏎️💚",
+        body: `${participant.nickname} aún no confirmó su llegada.`,
+      });
+
+  
+    if (result.success) {
+      successCount++;
+    }
+  }
+
+  if (successCount > 0) {
+    const {
+      error: groupNotificationError,
+    } = await supabase
+      .from("participants")
+      .update({
+        automation_stage:
+          "group_notified",
+      })
+      .eq(
+        "id",
+        participant.id
+      );
+
+    if (!groupNotificationError) {
+      groupNotificationUpdated++;
+    }
   }
 }
-
     return NextResponse.json({
       success: true,
       updated,

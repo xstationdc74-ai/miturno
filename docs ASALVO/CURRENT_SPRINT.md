@@ -107,3 +107,20 @@ feat(asalvo): migrate group layout to new design system
 ## Próximo commit esperado
 
 feat(asalvo): migrate realtime participants to design system
+
+✅ Push Notifications recuperadas
+
+- register-device funcionando
+- sendPush() centralizado en lib/asalvo/sendPush.ts
+- send-push reutiliza sendPush()
+- Arrival Monitor integrado con sendPush()
+- Primer recordatorio funcionando
+
+Pendiente:
+
+- Automatizar register-device (eliminar botón)
+- Segundo recordatorio
+- Notificación al grupo
+- Cron/Vercel Scheduler
+- UX final
+- APK

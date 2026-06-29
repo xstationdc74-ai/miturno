@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-import Button from "@/components/asalvo/ui/Button";
 import Card from "@/components/asalvo/ui/Card";
 
 import ConfirmButton from "./ConfirmButton";
@@ -14,59 +13,40 @@ export default function GroupActions() {
   const [participantToken, setParticipantToken] =
     useState<string | null>(null);
 
-  const [permission, setPermission] =
-    useState<string>("default");
-
   useEffect(() => {
     const token = localStorage.getItem(
       "asalvo_participant_token"
     );
 
     setParticipantToken(token);
-
-    if (
-      typeof window !== "undefined" &&
-      "Notification" in window
-    ) {
-      setPermission(Notification.permission);
-    }
   }, []);
 
-  async function enableNotifications() {
+  useEffect(() => {
+    if (!participantToken) {
+      return;
+    }
+
+    void enableNotifications();
+  }, [participantToken]);
+
+  async function enableNotifications(): Promise<boolean> {
     try {
       const result =
         await Notification.requestPermission();
 
-      console.log(
-        "Notification permission:",
-        result
-      );
-
-      setPermission(result);
-
       if (result !== "granted") {
-        return;
+        return false;
       }
 
       const messaging =
         await getMessagingInstance();
 
-      console.log(
-        "Messaging instance:",
-        messaging
-      );
-
       if (!messaging) {
-        return;
+        return false;
       }
 
       const registrations =
         await navigator.serviceWorker.getRegistrations();
-
-      console.log(
-        "SW registrations:",
-        registrations
-      );
 
       const firebaseToken =
         await getToken(messaging, {
@@ -76,23 +56,11 @@ export default function GroupActions() {
             registrations[0],
         });
 
-      console.log(
-        "Firebase token:",
-        firebaseToken
-      );
-
       if (
         !firebaseToken ||
         !participantToken
       ) {
-        console.log(
-          "Abort:",
-          {
-            firebaseToken,
-            participantToken,
-          }
-        );
-        return;
+        return false;
       }
 
       const response =
@@ -112,21 +80,10 @@ export default function GroupActions() {
           }
         );
 
-      console.log(
-        "register-device status:",
-        response.status
-      );
+      return response.ok;
 
-      console.log(
-        "register-device body:",
-        await response.json()
-      );
-
-    } catch (error) {
-      console.error(
-        "Enable notifications error:",
-        error
-      );
+    } catch {
+      return false;
     }
   }
 
@@ -136,22 +93,9 @@ export default function GroupActions() {
 
   return (
     <Card className="space-y-4">
-
       <ConfirmButton
         participantToken={participantToken}
       />
-
-      <Button
-        fullWidth
-        onClick={enableNotifications}
-      >
-        🔔 Activar notificaciones
-      </Button>
-
-      <p className="text-center text-sm text-slate-500">
-        Estado: {permission}
-      </p>
-
     </Card>
   );
 }

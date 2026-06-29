@@ -57,13 +57,25 @@ export async function POST(request: Request) {
     } = await supabase
       .from("participants")
       .insert({
-        group_id: group.id,
-        user_id: user.id,
-        nickname,
-        status: "pending",
-        arrival_from: fromTime,
-        arrival_to: toTime,
-      })
+  group_id: group.id,
+  user_id: user.id,
+  nickname,
+  status: "pending",
+
+  automation_stage: "waiting",
+
+  arrival_from: fromTime,
+  arrival_to: toTime,
+
+  arrival_date: new Date()
+    .toISOString()
+    .split("T")[0],
+
+  timezone:
+    Intl.DateTimeFormat()
+      .resolvedOptions()
+      .timeZone,
+})
       .select()
       .single();
 

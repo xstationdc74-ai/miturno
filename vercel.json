@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/asalvo/arrival-monitor",
+      "schedule": "* * * * *"
+    }
+  ]
+}

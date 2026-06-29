@@ -373,3 +373,74 @@ Android
 Objetivo:
 Encontrar el punto donde este flujo dejó de ejecutarse.
 No reemplazarlo por otro.
+
+Antes de indicar un archivo:
+
+1. Priorizar siempre la estructura REAL del proyecto.
+2. Si hay dudas sobre la ubicación, pedir el árbol.
+3. Nunca asumir rutas por convención de Next.js.
+
+app/
+├── api/
+│ └── asalvo/
+│ ├── arrival-monitor/
+│ ├── groups/
+│ ├── register-device/
+│ ├── send-push/
+│ └── send-test-push/
+│
+├── asalvo/
+│ ├── login/
+│ ├── auth/
+│ ├── create/
+│ ├── join/
+│ ├── group/
+│ │ └── [groupId]/
+│ │ ├── page.tsx
+│ │ ├── GroupActions.tsx
+│ │ ├── GroupRealtime.tsx
+│ │ ├── ConfirmButton.tsx
+│ │ └── ...
+│ └── page.tsx
+│
+components/
+├── asalvo/
+│ ├── layout/
+│ ├── AppLayout.tsx
+│ ├── ButttomNavigator.tsx
+│ ├── Headers.tsx
+│ ├── index.ts
+│ ├── ui/
+│ │ ├── Avatar.tsx
+│ │ ├── Button.tsx
+│ │ ├── Card.tsx
+│ │ ├── FloatingButton.tsx
+│ │ ├── index.ts
+│ │ ├── input.tsx
+│ │ ├── Section.tsx
+│ ├── statusBadge.tsx
+│ ├── features/
+│ │ ├── EmptyState.tsx
+│ │ ├── GroupCard.tsx
+│ │ ├── HeroArrival.tsx
+│ │ ├── ParticipantCard.ts
+│
+lib/
+├── asalvo/
+│ ├── messaging.ts
+│ ├── sendPush.ts
+│ └── datetime.ts
+│ └── firebase.ts
+│ └── groups.ts
+│ └── notifications.ts
+│ └── participans.ts
+│ └── profiles.ts
+│
+public/
+├── asalvo/hero
+│ ├── invitation.png
+│ ├── journey.png
+│ ├── safe.png
+├── asalvo/login
+│ ├── login.png
+├── firebase-messaging-sw.js
