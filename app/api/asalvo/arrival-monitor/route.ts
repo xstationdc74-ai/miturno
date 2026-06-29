@@ -11,6 +11,12 @@ export async function GET(request: Request) {
   const cronSecret =
     process.env.CRON_SECRET;
 
+   console.log({
+  hasSecret: !!cronSecret,
+  secretLength: cronSecret?.length,
+  authHeaderLength: authHeader?.length,
+});
+
   if (
     !cronSecret ||
     authHeader !== `Bearer ${cronSecret}`
